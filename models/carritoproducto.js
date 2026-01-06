@@ -1,0 +1,44 @@
+'use strict';
+const { Model } = require('sequelize');
+
+module.exports = (sequelize, DataTypes) => {
+  class CarritoProducto extends Model {
+    static associate(models) {
+      this.belongsTo(models.Carrito, { foreignKey: 'id_carrito' });
+      this.belongsTo(models.Vino, { foreignKey: 'id_vino' });
+    }
+  }
+
+  CarritoProducto.init({
+    id_carrito_producto: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    id_carrito: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    id_vino: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    cantidad: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: { min: 1 }
+    },
+    precio_venta: {
+      type: DataTypes.DOUBLE,
+      allowNull: false,
+      validate: { min: 0 }
+    }
+  }, {
+    sequelize,
+    modelName: 'CarritoProducto',
+    tableName: 'carritos_productos',
+    timestamps: false,
+  });
+
+  return CarritoProducto;
+};
