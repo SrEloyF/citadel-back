@@ -6,11 +6,11 @@ function generateCrudRoutes(controller) {
   router.get('/', controller.findAll);
   router.post('/', controller.create);
   router.get('/:id', controller.findById);
-  router.put('/:id', controller.update);
+  router.put('/:id', controller.update); // probar
   router.delete('/:id', controller.delete);
-  router.patch('/:id', controller.updateField);
+  //router.patch('/:id', controller.updateField);
   router.post('/buscar', controller.findByField);
-  router.patch('/:id/fields', controller.updateFields);
+  router.patch('/:id', controller.updateFields);
 
   return router;
 }

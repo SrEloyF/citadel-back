@@ -13,8 +13,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: { model: 'usuarios', key: 'id_usuario' },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        onDelete: 'RESTRICT'
       },
       estado: {
         type: Sequelize.ENUM('E','V'),

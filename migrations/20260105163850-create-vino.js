@@ -22,7 +22,7 @@ module.exports = {
       },
       descripcion: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: false
       },
       volumen_ml: {
         type: Sequelize.INTEGER,

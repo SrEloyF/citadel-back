@@ -13,7 +13,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: { model: 'vinos', key: 'id_vino' },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       url_img: {

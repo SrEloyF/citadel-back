@@ -14,7 +14,7 @@ module.exports = {
         allowNull: false,
         unique: true,
         references: { model: 'carritos', key: 'id_carrito' },
-        onDelete: 'CASCADE',
+        onDelete: 'RESTRICT',
       },
       metodo: {
         type: Sequelize.ENUM('E', 'T'),

@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       this.belongsTo(models.Usuario, { foreignKey: 'id_usuario' });
       this.hasMany(models.CarritoProducto, { foreignKey: 'id_carrito' });
-      this.hasOne(models.Pago, { foreignKey: 'id_pedido',as: 'pago' });
+      this.hasOne(models.Pago, { foreignKey: 'id_pedido', as: 'pago' });
     }
   }
 
@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     estado: {
-      type: DataTypes.ENUM('V','E'),
+      type: DataTypes.ENUM('V', 'E'),
       allowNull: false,
       defaultValue: 'E'
     },
@@ -32,6 +32,16 @@ module.exports = (sequelize, DataTypes) => {
     fecha_compra: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    fecha_creacion: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
     }
   }, {
     sequelize,
