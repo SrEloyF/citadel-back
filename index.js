@@ -24,7 +24,7 @@ app.use('/carritos', authMiddleware, verifyCsrf, require('./routes/carritoRoutes
 app.use('/categoriasvinos', authMiddleware, verifyCsrf, require('./routes/categoriaVinoRoutes'));
 app.use('/imagenesadicionalesvinos', authMiddleware, verifyCsrf, require('./routes/imagenAdicionalVinoRoutes'));
 app.use('/pagos', authMiddleware, verifyCsrf, require('./routes/pagoRoutes'));
-app.use('/usuarios', require('./routes/usuarioRoutes'));
+app.use('/usuarios', authMiddleware, verifyCsrf, require('./routes/usuarioRoutes'));
 app.use('/vinos', authMiddleware, verifyCsrf, require('./routes/vinoRoutes'));
 
 const PORT = 3000;

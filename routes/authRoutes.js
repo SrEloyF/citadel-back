@@ -9,6 +9,7 @@ const loginLimiter = rateLimit({
   message: "Demasiados intentos. Intente en un momento.",
 });
 
+router.post('/register', loginLimiter, authController.register);
 router.post('/login', loginLimiter, authController.login);
 router.post('/refresh', loginLimiter, authController.refresh);
 router.post('/logout', verifyCsrf, loginLimiter, authController.logout);

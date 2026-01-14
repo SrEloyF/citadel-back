@@ -1,5 +1,21 @@
 const authService = require('../services/authService');
 const generateCsrfToken  = require('../auth/csrfUtils');
+const usuarioService = require('../services/usuarioService');
+const validarCamposModelo = require('../validators/modelValidator');
+
+const register = async (req, res) => {
+  try {
+    validarCamposModelo(usuarioService.model, req.body);
+    const usuario = await usuarioService.create(req.body);
+    res.status(201).json(usuario);
+  } catch (err) {
+    res.status(400).json({
+      error: err.message,
+      msg: err.name || undefined,
+      original: err.original?.sqlMessage || undefined
+    });
+  }
+};
 
 const login = async (req, res) => {
   if (!req.body || typeof req.body !== 'object') {
@@ -79,4 +95,4 @@ const logout = (req, res) => {
     .end();
 };
 
-module.exports = { login, refresh, logout };
+module.exports = { register, login, refresh, logout };

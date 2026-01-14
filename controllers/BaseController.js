@@ -1,36 +1,13 @@
+const validarCamposModelo = require('../validators/modelValidator');
+
 class BaseController {
   constructor(service) {
     this.service = service;
   }
 
-  validarCampos = (body) => {
-    if (!body || typeof body !== 'object') {
-      throw new Error('Request body vacío o no es JSON');
-    }
-    const atributos = this.service.model.rawAttributes;
-    const errores = [];
-
-    for (const key in atributos) {
-      const atributo = atributos[key];
-
-      if (atributo.autoIncrement || atributo.defaultValue !== undefined) continue;
-
-      const requerido = atributo.allowNull === false;
-      const valor = body[key];
-
-      if (requerido && (valor === undefined || valor === null || valor === '')) {
-        errores.push(`El campo '${key}' es obligatorio.`);
-      }
-    }
-
-    if (errores.length > 0) {
-      throw new Error(errores.join(' '));
-    }
-  };
-
   create = async (req, res) => {
     try {
-      this.validarCampos(req.body);
+      validarCamposModelo(this.service.model, req.body);
       const result = await this.service.create(req.body);
       res.status(201).json(result);
     } catch (err) {
@@ -85,7 +62,7 @@ class BaseController {
 
   update = async (req, res) => {
     try {
-      this.validarCampos(req.body);
+      validarCamposModelo(this.service.model, req.body);
       const result = await this.service.update(req.params.id, req.body);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
