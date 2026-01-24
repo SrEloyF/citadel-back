@@ -1,10 +1,12 @@
 const BaseService = require('./BaseService');
 const { Usuario } = require('../models');
 const bcrypt = require('bcrypt');
+const ownershipConfig = require('../config/ownershipConfig');
+const models = require('../models');
 
 class UsuarioService extends BaseService {
   constructor() {
-    super(Usuario);
+    super(Usuario, ownershipConfig.Usuario, models);
   }
 
   async validatePassword(email, plainPassword) {

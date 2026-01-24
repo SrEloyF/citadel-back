@@ -1,6 +1,6 @@
 const express = require('express');
-const generateCrudRoutes = require('./BaseRoutes');
-const usuarioController = require('../controllers/usuarioController');
+const generateCrudRoutes = require('../BaseRoutes');
+const usuarioController = require('../../controllers/usuarioController');
 
 const router = express.Router();
 router.post('/', (req, res) => {

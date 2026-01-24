@@ -1,33 +1,21 @@
-require('dotenv').config();
+const app = require('./app');
+const db = require('./models');
 
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-const authMiddleware = require('./auth/authMiddleware');
-const verifyCsrf = require('./auth/csrfMiddleware');
+const PORT = process.env.PORT || 3000;
 
-const app = express();
+async function startServer() {
+  try {
+    await db.sequelize.authenticate();
+    console.log('Conexión a MySQL establecida correctamente.');
 
-app.use(express.json());
-app.use(cookieParser());
-app.set("trust proxy", 1);
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    });
 
-app.use(cors({
-  origin: 'http://localhost:4200',
-  credentials: true,
-}));
+  } catch (error) {
+    console.error('Error al conectar con la base de datos:', error.name);
+    process.exit(1);
+  }
+}
 
-// Rutas REST
-app.use('/auth', require('./routes/authRoutes'));
-app.use('/carritosproductos', authMiddleware, verifyCsrf, require('./routes/carritoProductoRoutes'));
-app.use('/carritos', authMiddleware, verifyCsrf, require('./routes/carritoRoutes'));
-app.use('/categoriasvinos', authMiddleware, verifyCsrf, require('./routes/categoriaVinoRoutes'));
-app.use('/imagenesadicionalesvinos', authMiddleware, verifyCsrf, require('./routes/imagenAdicionalVinoRoutes'));
-app.use('/pagos', authMiddleware, verifyCsrf, require('./routes/pagoRoutes'));
-app.use('/usuarios', authMiddleware, verifyCsrf, require('./routes/usuarioRoutes'));
-app.use('/vinos', authMiddleware, verifyCsrf, require('./routes/vinoRoutes'));
-
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+startServer();

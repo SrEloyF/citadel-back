@@ -138,6 +138,94 @@ class BaseController {
     }
   };
 
+  // Métodos para el ownershipConfig 
+  findAllMine = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const result = await this.service.findAllMine(userId);
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+
+  findMineById = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      const result = await this.service.findMineById(id, userId);
+      res.json(result);
+
+    } catch (err) {
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
+      if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
+      if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
+      return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
+    }
+  };
+
+  createMine = async (req, res) => {
+    try {
+      console.log('REQ.USER:', req.user);
+      console.log('REQ.BODY:', req.body);
+      validarCamposModelo(this.service.model, req.body);
+      const userId = req.user.id;
+      const result = await this.service.createMine(req.body, userId);
+
+      return res.status(201).json(result);
+    } catch (err) {
+      if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
+      if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
+      return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
+    }
+  };
+
+  findAllMineByField = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { campo, valor } = req.body;
+      if (!campo || valor === undefined) {
+        return res.status(400).json({ error: "Se requiere 'campo' y 'valor'" });
+      }
+
+      const result = await this.service.findAllMineByField(campo, valor, userId);
+      return res.json(result);
+    } catch (err) {
+      if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
+      return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
+    }
+  };
+
+  updateMine = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const result = await this.service.updateMine(id, req.body, userId);
+      return res.json(result);
+    } catch (err) {
+      if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
+      if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
+      return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
+    }
+  };
+
+  deleteMine = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const success = await this.service.deleteMine(id, userId);
+      if (success) return res.status(204).send();
+      return res.status(500).json({ error: 'No se pudo eliminar' + err.message});
+    } catch (err) {
+      if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
+      if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
+      return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
+    }
+  };
+
 }
 
 module.exports = BaseController;

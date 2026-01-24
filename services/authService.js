@@ -25,7 +25,7 @@ const refreshAccessToken = (refreshToken) => {
   return generateAccessToken({
     id: payload.id,
     email: payload.email,
-    role: payload.role,
+    tipo: payload.tipo,
   });
 };
 

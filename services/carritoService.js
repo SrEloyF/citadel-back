@@ -1,9 +1,11 @@
 const BaseService = require('./BaseService');
 const { Carrito } = require('../models');
+const ownershipConfig = require('../config/ownershipConfig');
+const models = require('../models');
 
 class CarritoService extends BaseService {
   constructor() {
-    super(Carrito);
+    super(Carrito, ownershipConfig.Carrito, models);
   }
 }
 
