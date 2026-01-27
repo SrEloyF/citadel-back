@@ -167,8 +167,6 @@ class BaseController {
 
   createMine = async (req, res) => {
     try {
-      console.log('REQ.USER:', req.user);
-      console.log('REQ.BODY:', req.body);
       validarCamposModelo(this.service.model, req.body);
       const userId = req.user.id;
       const result = await this.service.createMine(req.body, userId);
