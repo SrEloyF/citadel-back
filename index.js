@@ -1,11 +1,21 @@
-const express = require('express');
-const app = express();
+const app = require('./app');
+const db = require('./models');
 
-app.get('/', (req, res) => {
-  res.send('Servidor funcionando');
-});
+const PORT = process.env.PORT || 3000;
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+async function startServer() {
+  try {
+    await db.sequelize.authenticate();
+    console.log('Conexión a MySQL establecida correctamente.');
+
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    });
+
+  } catch (error) {
+    console.error('Error al conectar con la base de datos:', error.name);
+    process.exit(1);
+  }
+}
+
+startServer();
