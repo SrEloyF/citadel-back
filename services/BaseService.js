@@ -181,7 +181,7 @@ class BaseService {
       }
       const related = await relatedModel.findOne({
         where: {
-          id: relatedId,
+          [relatedModel.primaryKeyAttribute]: relatedId,
           [whereField]: userId,
         },
       });
@@ -204,6 +204,9 @@ class BaseService {
 
 
   async findAllMineByField(field, value, userId) {
+    if (!(field in this.model.rawAttributes)) {
+      throw new Error(`El campo '${field}' no es válido.`);
+    }
     const ownershipQuery = this.buildOwnershipQuery(userId);
     const where = {
       [field]: value,
@@ -230,9 +233,14 @@ class BaseService {
       if (data[ownerField] !== undefined && data[ownerField] !== userId) {
         throw new OwnershipError('No puedes cambiar el propietario del recurso');
       }
-      if (data[ownerField] !== undefined) delete data[ownerField];
+      
+      const cleanData = { ...data };
 
-      const [affected] = await this.model.update(data, {
+      if (data[ownerField] !== undefined) {
+        delete cleanData[ownerField];
+      }
+
+      const [affected] = await this.model.update(cleanData, {
         where: {
           [pkField]: id,
           [ownerField]: userId

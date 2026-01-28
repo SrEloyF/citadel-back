@@ -27,7 +27,7 @@ module.exports = {
       whereField: 'id_usuario',
     },
     create: {
-      foreignKey: 'id_pedido'
+      foreignKey: 'id_carrito'
     }
   },
 };

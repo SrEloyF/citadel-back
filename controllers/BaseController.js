@@ -216,7 +216,7 @@ class BaseController {
       const { id } = req.params;
       const success = await this.service.deleteMine(id, userId);
       if (success) return res.status(204).send();
-      return res.status(500).json({ error: 'No se pudo eliminar' + err.message});
+      return res.status(500).json({ error: 'No se pudo eliminar'});
     } catch (err) {
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
