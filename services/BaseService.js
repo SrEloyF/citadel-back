@@ -289,6 +289,74 @@ class BaseService {
     throw new Error('Configuración de ownership inválida');
   }
 
+
+  async updateAllMineFields(id, fields, userId) {
+    if (!this.ownershipConfig) {
+      throw new Error('Ownership no definido para este modelo');
+    }
+
+    const cfg = this.ownershipConfig;
+    const pkField = this.model.primaryKeyAttribute;
+
+    if (cfg.type === 'direct') {
+      const ownerField = cfg.field;
+      if (fields[ownerField] !== undefined && fields[ownerField] !== userId) {
+        throw new OwnershipError('No puedes cambiar el propietario del recurso');
+      }
+
+      const cleanFields = { ...fields };
+      if (fields[ownerField] !== undefined) {
+        delete cleanFields[ownerField];
+      }
+
+      const [affected] = await this.model.update(cleanFields, {
+        where: {
+          [pkField]: id,
+          [ownerField]: userId
+        },
+      });
+
+      if (affected > 0) {
+        return await this.model.findByPk(id);
+      }
+
+      const exists = await this.model.findByPk(id);
+      if (!exists) throw new NotFoundError();
+      throw new OwnershipError();
+    }
+
+    if (cfg.type === 'join') {
+      const ownershipQuery = this.buildOwnershipQuery(userId);
+      const instance = await this.model.findOne({
+        where: { [pkField]: id, ...(ownershipQuery.where || {}) },
+        ...(ownershipQuery.include ? { include: ownershipQuery.include } : {}),
+      });
+
+      if (instance) {
+        if (cfg.create && cfg.create.foreignKey && fields[cfg.create.foreignKey] !== undefined) {
+          const relatedModel = this.models[cfg.include.model];
+          const newRelatedId = fields[cfg.create.foreignKey];
+          const related = await relatedModel.findOne({
+            where: { id: newRelatedId, [cfg.include.whereField]: userId },
+          });
+          if (!related) {
+            const existsRelated = await relatedModel.findByPk(newRelatedId);
+            if (!existsRelated) throw new NotFoundError(`${cfg.include.model} no existe`);
+            throw new OwnershipError(`${cfg.include.model} no pertenece al usuario`);
+          }
+        }
+
+        await instance.update(fields);
+        return instance;
+      }
+      const exists = await this.model.findByPk(id);
+      if (!exists) throw new NotFoundError();
+      throw new OwnershipError();
+    }
+
+    throw new Error('Configuración de ownership inválida');
+  }
+
   async deleteMine(id, userId) {
     if (!this.ownershipConfig) {
       throw new Error('Ownership no definido para este modelo');

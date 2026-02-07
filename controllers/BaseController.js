@@ -210,6 +210,25 @@ class BaseController {
     }
   };
 
+  updateAllMineFields = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const fields = req.body;
+      if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+        return res.status(400).json({ error: "Se requiere un objeto con los campos a actualizar" });
+      }
+      const result = await this.service.updateAllMineFields(id, fields, userId);
+      if (!result) return res.status(404).json({ error: 'No encontrado' });
+      res.json(result);
+    } catch (err) {
+      if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
+      if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
+      return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
+    }
+  };  
+
   deleteMine = async (req, res) => {
     try {
       const userId = req.user.id;

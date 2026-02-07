@@ -6,6 +6,7 @@ router.get('/', controller.findAllMine);
 router.get('/:id', controller.findMineById);
 router.post('/', controller.createMine);
 router.post('/buscar', controller.findAllMineByField);
+router.patch('/:id', controller.updateAllMineFields);
 router.put('/:id', controller.updateMine);
 //router.delete('/:id', controller.deleteMine);
 
