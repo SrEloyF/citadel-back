@@ -4,9 +4,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Vino extends Model {
     static associate(models) {
-      this.belongsTo(models.CategoriaVino, { foreignKey: 'id_categoria' });
       this.hasMany(models.ImagenAdicionalVino, { foreignKey: 'id_vino' });
       this.hasMany(models.CarritoProducto, { foreignKey: 'id_vino' });
+      this.hasMany(models.Precio, { foreignKey: 'id_vino' });
+      this.belongsTo(models.Sabor, { foreignKey: 'id_sabor' });
+      this.belongsTo(models.Presentacion, { foreignKey: 'id_presentacion' });
     }
   }
 
@@ -16,9 +18,13 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
-    id_categoria: {
+    id_sabor: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+    },
+    id_presentacion: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     nombre: {
       type: DataTypes.STRING,
@@ -34,18 +40,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       validate: { min: 1 }
     },
-    precio: {
-      type: DataTypes.DOUBLE,
-      allowNull: false,
-      validate: { min: 0 }
-    },
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: { min: 0 }
     },
     estado: {
-      type: DataTypes.ENUM('D','A'),
+      type: DataTypes.ENUM('D', 'A', 'P'),
       allowNull: false,
       defaultValue: 'D'
     },
@@ -59,18 +60,20 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW
-    }
   }, {
     sequelize,
     modelName: 'Vino',
     tableName: 'vinos',
     timestamps: true,
     createdAt: 'fecha_creacion',
-    updatedAt: 'updated_at'
+    updatedAt: false,
+    indexes: [
+    {
+      unique: true,
+      fields: ['id_sabor', 'id_presentacion', 'volumen_ml'],
+      name: 'unique_sabor_presentacion_volumen'
+    }
+  ]
   });
 
   return Vino;
