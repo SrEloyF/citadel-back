@@ -1,3 +1,5 @@
+require('pg');
+require('mysql2');
 'use strict';
 
 const fs = require('fs');
