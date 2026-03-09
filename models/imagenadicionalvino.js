@@ -4,7 +4,10 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ImagenAdicionalVino extends Model {
     static associate(models) {
-      this.belongsTo(models.Vino, { foreignKey: 'id_vino' });
+      this.belongsTo(models.Vino, { 
+        foreignKey: 'id_vino',
+        onDelete: 'CASCADE'
+      });
     }
   }
 

@@ -5,8 +5,12 @@ const validarCamposModelo = require('../validators/modelValidator');
 
 const register = async (req, res) => {
   try {
-    validarCamposModelo(usuarioService.model, req.body);
-    const usuario = await usuarioService.create(req.body);
+    const data = {
+      ...req.body,
+      tipo: 'U'
+    };
+    validarCamposModelo(usuarioService.model, data);
+    const usuario = await usuarioService.create(data);
     res.status(201).json(usuario);
   } catch (err) {
     res.status(400).json({

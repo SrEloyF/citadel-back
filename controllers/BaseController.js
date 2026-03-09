@@ -7,10 +7,10 @@ class BaseController {
 
   create = async (req, res) => {
     try {
-      validarCamposModelo(this.service.model, req.body);
-      const result = await this.service.create(req.body);
+      const result = await this.service.create(req.body, req.file || null);
       res.status(201).json(result);
     } catch (err) {
+      console.log(err);
       res.status(400).json({
         error: err.message,
         msg: err.name || undefined,
@@ -46,6 +46,7 @@ class BaseController {
         return res.json(result);
       }
     } catch (err) {
+      console.log(err);
       res.status(500).json({ error: err.message });
     }
   };
@@ -56,6 +57,7 @@ class BaseController {
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
+      console.log(err);
       res.status(500).json({ error: err.message });
     }
   };
@@ -63,10 +65,11 @@ class BaseController {
   update = async (req, res) => {
     try {
       validarCamposModelo(this.service.model, req.body);
-      const result = await this.service.update(req.params.id, req.body);
+      const result = await this.service.update(req.params.id, req.body, req.file || null);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
+      console.log(err);
       res.status(400).json({
         error: err.message,
         msg: err.name || undefined,
@@ -81,10 +84,12 @@ class BaseController {
       if (!success) return res.status(404).json({ error: 'No encontrado' });
       res.status(204).send();
     } catch (err) {
+      console.log(err);
       res.status(500).json({ error: err.message });
     }
   };
 
+  /*
   updateField = async (req, res) => {
     const { campo, valor } = req.body;
 
@@ -93,17 +98,18 @@ class BaseController {
     }
 
     try {
-      const result = await this.service.updateField(req.params.id, campo, valor);
+      const result = await this.service.updateField(req.params.id, campo, valor, req.file || null);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
+      console.log(err);
       res.status(400).json({
         error: err.message,
         msg: err.name || undefined,
         original: err.original?.sqlMessage || undefined
       });
     }
-  };
+  };*/
 
   findByField = async (req, res) => {
     const { campo, valor } = req.body;
@@ -116,20 +122,19 @@ class BaseController {
       const result = await this.service.findByField(campo, valor);
       res.json(result);
     } catch (err) {
+      console.log(err);
       res.status(400).json({ error: err.message });
     }
   };
 
   updateFields = async (req, res) => {
     const fields = req.body;
-    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
-      return res.status(400).json({ error: "Se requiere un objeto con los campos a actualizar" });
-    }
     try {
-      const result = await this.service.updateFields(req.params.id, fields);
+      const result =  await this.service.updateFields(req.params.id, fields, req.file || null);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
+      console.log(err);
       res.status(400).json({
         error: err.message,
         msg: err.name || undefined,
@@ -145,6 +150,7 @@ class BaseController {
       const result = await this.service.findAllMine(userId);
       res.json(result);
     } catch (err) {
+      console.log(err);
       res.status(500).json({ error: err.message });
     }
   };
@@ -158,6 +164,7 @@ class BaseController {
       res.json(result);
 
     } catch (err) {
+      console.log(err);
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
@@ -173,6 +180,7 @@ class BaseController {
 
       return res.status(201).json(result);
     } catch (err) {
+      console.log(err);
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
@@ -191,6 +199,7 @@ class BaseController {
       const result = await this.service.findAllMineByField(campo, valor, userId);
       return res.json(result);
     } catch (err) {
+      console.log(err);
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
     }
@@ -203,6 +212,7 @@ class BaseController {
       const result = await this.service.updateMine(id, req.body, userId);
       return res.json(result);
     } catch (err) {
+      console.log(err);
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
@@ -215,13 +225,11 @@ class BaseController {
       const userId = req.user.id;
       const { id } = req.params;
       const fields = req.body;
-      if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
-        return res.status(400).json({ error: "Se requiere un objeto con los campos a actualizar" });
-      }
       const result = await this.service.updateAllMineFields(id, fields, userId);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
+      console.log(err);
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
@@ -237,6 +245,7 @@ class BaseController {
       if (success) return res.status(204).send();
       return res.status(500).json({ error: 'No se pudo eliminar'});
     } catch (err) {
+      console.log(err);
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });

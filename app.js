@@ -19,16 +19,7 @@ app.use(cors({
 }));
 
 // Rutas REST
-/*
-app.use('/auth', require('./routes/authRoutes'));
-app.use('/carritosproductos', authMiddleware, verifyCsrf, require('./routes/carritoProductoRoutes'));
-app.use('/carritos', authMiddleware, verifyCsrf, require('./routes/carritoRoutes'));
-app.use('/categoriasvinos', authMiddleware, verifyCsrf, require('./routes/categoriaVinoRoutes'));
-app.use('/imagenesadicionalesvinos', authMiddleware, verifyCsrf, require('./routes/imagenAdicionalVinoRoutes'));
-app.use('/pagos', authMiddleware, verifyCsrf, require('./routes/pagoRoutes'));
-app.use('/usuarios', authMiddleware, verifyCsrf, require('./routes/usuarioRoutes'));
-app.use('/vinos', authMiddleware, verifyCsrf, require('./routes/vinoRoutes'));
-*/
+
 // Rutas para autenticación
 app.use('/auth', require('./routes/authRoutes'));
 
@@ -36,7 +27,6 @@ app.use('/auth', require('./routes/authRoutes'));
 app.use('/public/precios', require('./routes/public/precioPublicRoutes'));
 app.use('/public/sabores', require('./routes/public/saborPublicRoutes'));
 app.use('/public/presentaciones', require('./routes/public/presentacionPublicRoutes'));
-//app.use('/public/categoriasvinos', require('./routes/public/categoriaVinoPublicRoutes'));
 app.use('/public/vinos', require('./routes/public/vinoPublicRoutes'));
 app.use('/public/imagenesadicionalesvinos', require('./routes/public/imagenAdicionalVinoPublicRoutes'));
 
@@ -50,7 +40,6 @@ app.use('/me/usuario', authMiddleware, verifyCsrf, require('./routes/authenticat
 app.use('/admin/presentaciones', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/presentacionRoutes'));
 app.use('/admin/sabores', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/saborRoutes'));
 app.use('/admin/precios', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/precioRoutes'));
-//app.use('/admin/categoriasvinos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/categoriaVinoRoutes'));
 app.use('/admin/vinos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/vinoRoutes'));
 app.use('/admin/imagenesadicionalesvinos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/imagenAdicionalVinoRoutes'));
 app.use('/admin/carritos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/carritoRoutes'));

@@ -9,7 +9,7 @@ class BaseService {
     this.models = models;
   }
 
-  async create(data) {
+  async create(data, file = null) {
     return await this.model.create(data);
   }
 
@@ -32,7 +32,7 @@ class BaseService {
     return await this.model.findByPk(id);
   }
 
-  async update(id, data) {
+  async update(id, data, file = null) {
     const instance = await this.findById(id);
     if (!instance) return null;
     return await instance.update(data);
@@ -45,7 +45,7 @@ class BaseService {
     return true;
   }
 
-  async updateField(id, campo, valor) {
+  async updateField(id, campo, valor, file = null) {
     const instancia = await this.findById(id);
     if (!instancia) return null;
 
@@ -69,7 +69,7 @@ class BaseService {
     });
   }
 
-  async updateFields(id, fields) {
+  async updateFields(id, fields = {}, file = null) {
     const instancia = await this.findById(id);
     if (!instancia) return null;
 

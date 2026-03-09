@@ -6,7 +6,7 @@ module.exports = {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: 'Sabores',
+        model: 'sabores',
         key: 'id_sabor',
       },
       onUpdate: 'CASCADE',
@@ -24,7 +24,6 @@ module.exports = {
       onDelete: 'RESTRICT',
     });
 
-    await queryInterface.removeColumn('vinos', 'id_categoria');
     await queryInterface.removeColumn('vinos', 'precio');
 
     if (queryInterface.sequelize.options.dialect === 'postgres') {
@@ -60,10 +59,7 @@ module.exports = {
 
     await queryInterface.removeColumn('vinos', 'id_sabor');
     await queryInterface.removeColumn('vinos', 'id_presentacion');
-    await queryInterface.addColumn('vinos', 'id_categoria', {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    });
+    
     await queryInterface.addColumn('vinos', 'precio', {
       type: Sequelize.DOUBLE,
       allowNull: false,

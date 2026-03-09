@@ -60,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: 'Precio',
-      tableName: 'Precios',
+      tableName: 'precios',
       timestamps: false
     }
   );
