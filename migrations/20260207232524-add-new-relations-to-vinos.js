@@ -27,18 +27,33 @@ module.exports = {
     await queryInterface.removeColumn('vinos', 'precio');
 
     if (queryInterface.sequelize.options.dialect === 'postgres') {
-      await queryInterface.sequelize.query(`
-        ALTER TYPE "enum_vinos_estado" RENAME TO "enum_vinos_estado_old";
-      `);
-      await queryInterface.sequelize.query(`
-        CREATE TYPE "enum_vinos_estado" AS ENUM('D', 'A', 'P');
-      `);
-      await queryInterface.sequelize.query(`
-        ALTER TABLE "vinos" ALTER COLUMN "estado" TYPE "enum_vinos_estado" USING "estado"::text::enum_vinos_estado;
-      `);
-      await queryInterface.sequelize.query(`
-        DROP TYPE "enum_vinos_estado_old";
-      `);
+      await queryInterface.sequelize.transaction(async (t) => {
+        await queryInterface.sequelize.query(`
+          ALTER TYPE "enum_vinos_estado" RENAME TO "enum_vinos_estado_old";
+        `, { transaction: t });
+
+        await queryInterface.sequelize.query(`
+          CREATE TYPE "enum_vinos_estado" AS ENUM('D', 'A', 'P');
+        `, { transaction: t });
+
+        await queryInterface.sequelize.query(`
+          ALTER TABLE "vinos" ALTER COLUMN "estado" DROP DEFAULT;
+        `, { transaction: t });
+
+        await queryInterface.sequelize.query(`
+          ALTER TABLE "vinos" ALTER COLUMN "estado"
+          TYPE "enum_vinos_estado"
+          USING "estado"::text::enum_vinos_estado;
+        `, { transaction: t });
+
+        await queryInterface.sequelize.query(`
+          ALTER TABLE "vinos" ALTER COLUMN "estado" SET DEFAULT 'D';
+        `, { transaction: t });
+
+        await queryInterface.sequelize.query(`
+          DROP TYPE "enum_vinos_estado_old";
+        `, { transaction: t });
+      });
     } else if (queryInterface.sequelize.options.dialect === 'mysql') {
       await queryInterface.changeColumn('vinos', 'estado', {
         type: Sequelize.ENUM('D', 'A', 'P'),
@@ -59,7 +74,7 @@ module.exports = {
 
     await queryInterface.removeColumn('vinos', 'id_sabor');
     await queryInterface.removeColumn('vinos', 'id_presentacion');
-    
+
     await queryInterface.addColumn('vinos', 'precio', {
       type: Sequelize.DOUBLE,
       allowNull: false,
