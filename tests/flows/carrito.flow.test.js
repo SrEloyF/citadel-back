@@ -93,6 +93,26 @@ describe('Flow carritos', () => {
     expect(res.body.estado).toBe('V');
   });
 
+  test('PATCH /me/carritos/:id - actualizar parcialmente mi carrito', async () => {
+    const createRes = await agent.post('/me/carritos').send({
+      id_usuario: user.id_usuario
+    }).expect(201);
+
+    const id = createRes.body.id_carrito;
+    const patchPayload = {
+      estado: 'V'
+    };
+
+    const patchRes = await agent
+      .patch(`/me/carritos/${id}`)
+      .send(patchPayload)
+      .expect(200);
+
+    expect(patchRes.body.estado).toBe('V');
+    expect(patchRes.body.id_carrito).toBe(id);
+    expect(patchRes.body.id_usuario).toBe(user.id_usuario);
+  });
+
   test('DELETE /me/carritos/:id - eliminar mi carrito', async () => {
     const create = await agent.post('/me/carritos').send({
       id_usuario: user.id_usuario,

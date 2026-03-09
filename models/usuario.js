@@ -3,6 +3,7 @@ const { Model } = require('sequelize');
 const bcrypt = require('bcrypt');
 
 module.exports = (sequelize, DataTypes) => {
+  const isTest = process.env.NODE_ENV === 'test';
   class Usuario extends Model {
     static associate(models) {
       this.hasMany(models.Carrito, { foreignKey: 'id_usuario' });
@@ -75,6 +76,9 @@ module.exports = (sequelize, DataTypes) => {
 
     hooks: {
       beforeCreate: async (usuario) => {
+        if (usuario.tipo === 'A' && !isTest) {
+          throw new Error("No se puede crear un admin en producción");
+        }
         if (usuario.hash_contrasena) {
           usuario.hash_contrasena = await bcrypt.hash(
             usuario.hash_contrasena,
@@ -83,6 +87,9 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
       beforeUpdate: async (usuario) => {
+        if (usuario.changed('tipo') && usuario.tipo === 'A' && !isTest) {
+          throw new Error("No se puede asignar tipo admin en producción");
+        }
         if (usuario.changed('hash_contrasena')) {
           usuario.hash_contrasena = await bcrypt.hash(
             usuario.hash_contrasena,

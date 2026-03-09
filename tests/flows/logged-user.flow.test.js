@@ -121,6 +121,46 @@ describe('Flow logged-user (ownership & self)', () => {
     expect(res.status).toBe(403);
   });
 
+  test('PATCH /me/carritos/:id - puedo editar parcialmente mi carrito', async () => {
+    const payload = { estado: 'V' };
+
+    const res = await agent
+      .patch(`/me/carritos/${myCarrito.id_carrito}`)
+      .send(payload);
+
+    if (res.status !== 200) {
+      console.error('PATCH ERROR:', res.status, res.body);
+    }
+
+    expect(res.status).toBe(200);
+    expect(res.body.estado).toBe('V');
+    expect(res.body.id_carrito).toBe(myCarrito.id_carrito);
+  });
+
+  test('PATCH /me/carritos/:id - no puedo editar parcialmente el carrito de otro usuario (403)', async () => {
+    const payload = { estado: 'V' };
+
+    const res = await agent
+      .patch(`/me/carritos/${otherCarrito.id_carrito}`)
+      .send(payload);
+
+    if (res.status !== 403) {
+      console.error('EXPECTED 403, GOT:', res.status, res.body);
+    }
+
+    expect(res.status).toBe(403);
+  });
+
+  test('PATCH /me/carritos/:id - recurso inexistente devuelve 404', async () => {
+    const payload = { estado: 'X' };
+
+    const res = await agent
+      .patch('/me/carritos/999999')
+      .send(payload);
+
+    expect(res.status).toBe(404);
+  }); 
+
   test('DELETE /me/carritos/:id - no puedo eliminar carrito de otro usuario (403)', async () => {
     const res = await agent.delete(`/me/carritos/${otherCarrito.id_carrito}`);
 

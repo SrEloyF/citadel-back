@@ -9,13 +9,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      id_categoria: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: { model: 'categorias_vinos', key: 'id_categoria' },
-        onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT'
-      },
       nombre: {
         type: Sequelize.STRING,
         allowNull: false

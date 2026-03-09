@@ -1,12 +1,14 @@
-function validarCamposModelo(model, body) {
+function validarCamposModelo(model, body, skipFields = []) {
+  /*
   if (!body || typeof body !== 'object') {
     throw new Error('Request body vacío o no es JSON');
-  }
+  }*/
 
   const atributos = model.rawAttributes;
   const errores = [];
 
   for (const key in atributos) {
+    if (skipFields.includes(key)) continue;
     const atributo = atributos[key];
 
     if (atributo.autoIncrement || atributo.defaultValue !== undefined) continue;

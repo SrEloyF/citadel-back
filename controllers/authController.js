@@ -1,12 +1,16 @@
 const authService = require('../services/authService');
-const generateCsrfToken  = require('../auth/csrfUtils');
+const generateCsrfToken = require('../auth/csrfUtils');
 const usuarioService = require('../services/usuarioService');
 const validarCamposModelo = require('../validators/modelValidator');
 
 const register = async (req, res) => {
   try {
-    validarCamposModelo(usuarioService.model, req.body);
-    const usuario = await usuarioService.create(req.body);
+    const data = {
+      ...req.body,
+      tipo: 'U'
+    };
+    validarCamposModelo(usuarioService.model, data);
+    const usuario = await usuarioService.create(data);
     res.status(201).json(usuario);
   } catch (err) {
     res.status(400).json({
@@ -18,43 +22,50 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  if (!req.body || typeof req.body !== 'object') {
-    return res.status(400).json({
-      error: 'Request body vacío o no es JSON',
-      msg: 'Error'
+  try {
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({
+        error: 'Request body vacío o no es JSON',
+        msg: 'Error',
+      });
+    }
+
+    const { email, contrasena } = req.body;
+
+    if (!email || !contrasena) {
+      return res.status(400).json({ error: 'Email y contraseña requeridos' });
+    }
+
+    const tokens = await authService.login(email, contrasena);
+
+    if (!tokens) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const csrfToken = generateCsrfToken();
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/auth/refresh',
+    });
+
+    res.cookie('XSRF-TOKEN', csrfToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+
+    return res.json({
+      accessToken: tokens.accessToken,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: `Error interno del servidor: ${err}`,
     });
   }
-
-  const { email, contrasena } = req.body;
-
-  if (!email || !contrasena) {
-    return res.status(400).json({ error: 'Email y contraseña requeridos' });
-  }
-
-  const tokens = await authService.login(email, contrasena);
-  const csrfToken = generateCsrfToken();
-  
-  if (!tokens) {
-    return res.status(401).json({ error: 'Credenciales inválidas' });
-  }
-
-  res.cookie('refreshToken', tokens.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/auth/refresh',
-  });
-
-  res.cookie('XSRF-TOKEN', csrfToken, {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/',
-  });
-
-  res.json({
-    accessToken: tokens.accessToken,
-  });
 };
 
 const refresh = (req, res) => {

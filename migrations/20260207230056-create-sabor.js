@@ -2,8 +2,8 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('categorias_vinos', {
-      id_categoria: {
+    await queryInterface.createTable('sabores', {
+      id_sabor: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
@@ -15,17 +15,12 @@ module.exports = {
       },
       descripcion: {
         type: Sequelize.STRING,
-        allowNull: true
-      },
-      estado: {
-        type: Sequelize.ENUM('D','A'),
-        allowNull: false,
-        defaultValue: 'A'
-      },
+        allowNull: false
+      }
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('categorias_vinos');
+    await queryInterface.dropTable('sabores');
   }
 };

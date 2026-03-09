@@ -1,5 +1,5 @@
 const BaseController = require('./BaseController');
-const VinoService = require('../services/VinoService');
+const VinoService = require('../services/vinoService');
 
 class VinoController extends BaseController {
   constructor() {
