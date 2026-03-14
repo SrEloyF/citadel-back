@@ -8,7 +8,7 @@ const refreshCookieOptions = {
   httpOnly: true,
   secure: isProd,
   sameSite: isProd ? 'none' : 'lax',
-  path: '/auth/refresh'
+  path: '/'
 };
 
 const csrfCookieOptions = {
