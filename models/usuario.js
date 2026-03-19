@@ -71,8 +71,9 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Usuario',
     tableName: 'usuarios',
-    timestamps: false,
+    timestamps: true,
     createdAt: 'fecha_creacion',
+    updatedAt: false,
 
     hooks: {
       beforeCreate: async (usuario) => {
@@ -97,7 +98,13 @@ module.exports = (sequelize, DataTypes) => {
           );
         }
       }
-    }
+    },
+    defaultScope: {
+      attributes: { exclude: ['hash_contrasena'] }
+    },
+    scopes: {
+      withPassword: { attributes: {} }
+    },
   });
 
   return Usuario;

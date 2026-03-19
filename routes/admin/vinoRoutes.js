@@ -1,6 +1,6 @@
 const generateCrudRoutes = require('../BaseRoutes');
 const vinoController = require('../../controllers/vinoController');
-const upload = require('../../middlewares/upload');
+const upload = require('../../middlewares/upload'); //const multer = require('multer');
 
 const router = generateCrudRoutes(vinoController);
 router.stack = router.stack.filter(

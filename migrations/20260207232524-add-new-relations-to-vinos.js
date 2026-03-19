@@ -76,7 +76,7 @@ module.exports = {
     await queryInterface.removeColumn('vinos', 'id_presentacion');
 
     await queryInterface.addColumn('vinos', 'precio', {
-      type: Sequelize.DOUBLE,
+      type: Sequelize.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
     });

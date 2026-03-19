@@ -4,6 +4,12 @@ const { Presentacion } = require('../models');
 class PresentacionService extends BaseService {
   constructor() {
     super(Presentacion);
+    this.allowedFields = [
+      'nombre'
+    ];
+    this.allowedUpdateFields = [
+      'nombre'
+    ];
   }
 }
 

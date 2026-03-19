@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       validate: { min: 1 }
     },
     precio_venta: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       validate: { min: 0 }
     }

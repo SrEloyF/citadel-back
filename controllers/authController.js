@@ -3,6 +3,7 @@ const generateCsrfToken = require('../auth/csrfUtils');
 const usuarioService = require('../services/usuarioService');
 const validarCamposModelo = require('../validators/modelValidator');
 const isProd = process.env.NODE_ENV === 'production';
+const logger = require('./../utils/logger');
 
 const refreshCookieOptions = {
   httpOnly: true,
@@ -28,6 +29,7 @@ const register = async (req, res) => {
     const usuario = await usuarioService.create(data);
     res.status(201).json(usuario);
   } catch (err) {
+    logger.error({ err }, 'Error al registrar usuario');
     res.status(400).json({
       error: err.message,
       msg: err.name || undefined,
@@ -80,6 +82,7 @@ const login = async (req, res) => {
     });
 
   } catch (err) {
+    logger.error({ err }, 'Error al iniciar sesión');
     return res.status(500).json({
       error: `Error interno del servidor: ${err}`
     });
@@ -109,8 +112,8 @@ const refresh = (req, res) => {
       accessToken
     });
 
-  } catch {
-
+  } catch (err) {
+    logger.error({ err }, 'Error al refrescar token');
     res.status(403).json({
       error: 'Refresh token inválido o expirado'
     });

@@ -1,6 +1,7 @@
 const s3 = require('../config/r2');
 const { URL } = require('url');
 const { randomUUID } = require('crypto');
+const logger = require('./../utils/logger');
 
 function normalizeFilename(name = '') {
   const noTilde = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
@@ -24,6 +25,7 @@ class StorageService {
         const u = new URL(value);
         return u.pathname.replace(/^\/+/, '');
       } catch (err) {
+        logger.error({ err }, 'Error al extraer clave de URL');
         return null;
       }
     }
@@ -59,7 +61,7 @@ class StorageService {
     try {
       await s3.deleteObject(params).promise();
     } catch (err) {
-      console.error('Error deleting object from R2:', err);
+      logger.error({ err, key }, 'Error al eliminar objeto de R2');
       throw err;
     }
   }

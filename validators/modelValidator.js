@@ -1,8 +1,10 @@
 function validarCamposModelo(model, body, skipFields = []) {
-  /*
+
   if (!body || typeof body !== 'object') {
-    throw new Error('Request body vacío o no es JSON');
-  }*/
+    throw new Error(
+      'El body no es válido o no fue procesado. Verifica middleware (JSON o multer).'
+    );
+  }
 
   const atributos = model.rawAttributes;
   const errores = [];

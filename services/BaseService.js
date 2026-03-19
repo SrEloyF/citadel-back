@@ -9,8 +9,21 @@ class BaseService {
     this.models = models;
   }
 
+  sanitize(data) {
+    const sanitized = {};
+
+    for (const key of this.allowedFields) {
+      if (data[key] !== undefined) {
+        sanitized[key] = data[key];
+      }
+    }
+
+    return sanitized;
+  }
+
   async create(data, file = null) {
-    return await this.model.create(data);
+    const sanitizedData = this.sanitize(data);
+    return await this.model.create(sanitizedData);
   }
 
   async findAll(limit, offset) {
@@ -35,7 +48,18 @@ class BaseService {
   async update(id, data, file = null) {
     const instance = await this.findById(id);
     if (!instance) return null;
-    return await instance.update(data);
+
+    const allowed = this.allowedUpdateFields?.length
+      ? this.allowedUpdateFields
+      : this.allowedFields;
+
+    const sanitizedData = this.sanitize(data, allowed);
+
+    if (Object.keys(sanitizedData).length !== Object.keys(data).length) {
+      throw new BadRequestError('Campos no permitidos en la solicitud');
+    }
+
+    return await instance.update(sanitizedData);
   }
 
   async delete(id) {
@@ -45,21 +69,12 @@ class BaseService {
     return true;
   }
 
-  async updateField(id, campo, valor, file = null) {
-    const instancia = await this.findById(id);
-    if (!instancia) return null;
-
-    if (!(campo in this.model.rawAttributes)) {
-      throw new Error(`El campo '${campo}' no es válido.`);
-    }
-
-    instancia[campo] = valor;
-    return await instancia.save();
-  }
-
   async findByField(campo, valor) {
     if (!(campo in this.model.rawAttributes)) {
       throw new Error(`El campo '${campo}' no es válido.`);
+    }
+    if (!this.allowedFields.includes(campo)) {
+      throw new Error(`No tiene permiso para modificar el campo '${campo}'.`);
     }
 
     return await this.model.findAll({
@@ -73,11 +88,23 @@ class BaseService {
     const instancia = await this.findById(id);
     if (!instancia) return null;
 
-    Object.keys(fields).forEach(key => {
-      if (key in this.model.rawAttributes) {
-        instancia[key] = fields[key];
+    const allowed = this.allowedUpdateFields?.length
+      ? this.allowedUpdateFields
+      : this.allowedFields;
+
+    for (const key of Object.keys(fields)) {
+      if (!allowed.includes(key)) {
+        throw new Error(`No tienes permiso para modificar el campo '${key}'.`);
       }
-    });
+
+      if (!(key in this.model.rawAttributes)) {
+        throw new Error(`El campo '${key}' no es válido.`);
+      }
+    }
+
+    for (const key of Object.keys(fields)) {
+      instancia[key] = fields[key];
+    }
 
     return await instancia.save();
   }
@@ -116,9 +143,26 @@ class BaseService {
     }
   }
 
-  async findAllMine(userId) {
+  async findAllMine(userId, limit, offset) {
     const ownershipQuery = this.buildOwnershipQuery(userId);
-    return await this.model.findAll(ownershipQuery);
+    const query = {
+      ...(ownershipQuery.where ? { where: ownershipQuery.where } : {}),
+      ...(ownershipQuery.include ? { include: ownershipQuery.include } : {}),
+      ...(limit !== undefined ? { limit } : {}),
+      ...(offset !== undefined ? { offset } : {}),
+    };
+    return await this.model.findAll(query);
+  }
+
+  async countMine(userId) {
+    const ownershipQuery = this.buildOwnershipQuery(userId);
+    const query = {
+      ...(ownershipQuery.where ? { where: ownershipQuery.where } : {}),
+      ...(ownershipQuery.include ? { include: ownershipQuery.include } : {}),
+      distinct: true,
+      col: this.model.primaryKeyAttribute,
+    };
+    return await this.model.count(query);
   }
 
   async findMineById(id, userId) {
@@ -145,20 +189,25 @@ class BaseService {
 
     const cfg = this.ownershipConfig;
 
+    const sanitized = this.sanitize(
+      data,
+      this.allowedFields
+    );
+
     if (cfg.type === 'direct') {
       const ownerField = cfg.field;
 
-      if (data[ownerField] === undefined) {
+      if (sanitized[ownerField] === undefined) {
         throw new BadRequestError(`El campo '${ownerField}' es obligatorio`);
       }
 
-      if (data[ownerField] !== userId) {
+      if (sanitized[ownerField] !== userId) {
         throw new OwnershipError(
           'El campo propietario no coincide con el usuario autenticado'
         );
       }
 
-      return await this.model.create(data);
+      return await this.model.create(sanitized);
     }
 
     if (cfg.type === 'join') {
@@ -175,7 +224,9 @@ class BaseService {
       if (!relatedModel) {
         throw new Error('Modelo relacionado no encontrado en models');
       }
-      const relatedId = data[foreignKey];
+
+      const relatedId = sanitized[foreignKey];
+
       if (relatedId === undefined || relatedId === null) {
         throw new BadRequestError(`Se requiere '${foreignKey}' en el body`);
       }
@@ -196,12 +247,11 @@ class BaseService {
         );
       }
 
-      return await this.model.create(data);
+      return await this.model.create(sanitized);
     }
 
     throw new Error('Configuración de ownership inválida');
   }
-
 
   async findAllMineByField(field, value, userId) {
     if (!(field in this.model.rawAttributes)) {
@@ -228,88 +278,24 @@ class BaseService {
     const cfg = this.ownershipConfig;
     const pkField = this.model.primaryKeyAttribute;
 
-    if (cfg.type === 'direct') {
-      const ownerField = cfg.field;
-      if (data[ownerField] !== undefined && data[ownerField] !== userId) {
-        throw new OwnershipError('No puedes cambiar el propietario del recurso');
-      }
-      
-      const cleanData = { ...data };
+    const allowed = this.allowedUpdateFields?.length
+      ? this.allowedUpdateFields
+      : this.allowedFields;
 
-      if (data[ownerField] !== undefined) {
-        delete cleanData[ownerField];
-      }
+    const sanitized = this.sanitize(data, allowed);
 
-      const [affected] = await this.model.update(cleanData, {
-        where: {
-          [pkField]: id,
-          [ownerField]: userId
-        },
-      });
-
-      if (affected > 0) {
-        const updated = await this.model.findByPk(id);
-        return updated;
-      }
-
-      const exists = await this.model.findByPk(id);
-      if (!exists) throw new NotFoundError();
-      throw new OwnershipError();
+    if (Object.keys(sanitized).length !== Object.keys(data).length) {
+      throw new OwnershipError('Se intentaron modificar campos no permitidos');
     }
-
-    if (cfg.type === 'join') {
-      const ownershipQuery = this.buildOwnershipQuery(userId);
-      const instance = await this.model.findOne({
-        where: { [pkField]: id, ...(ownershipQuery.where || {}) },
-        ...(ownershipQuery.include ? { include: ownershipQuery.include } : {}),
-      });
-
-      if (instance) {
-        if (cfg.create && cfg.create.foreignKey && data[cfg.create.foreignKey] !== undefined) {
-          const relatedModel = this.models[cfg.include.model];
-          const newRelatedId = data[cfg.create.foreignKey];
-          const related = await relatedModel.findOne({
-            where: { id: newRelatedId, [cfg.include.whereField]: userId },
-          });
-          if (!related) {
-            const existsRelated = await relatedModel.findByPk(newRelatedId);
-            if (!existsRelated) throw new NotFoundError(`${cfg.include.model} no existe`);
-            throw new OwnershipError(`${cfg.include.model} no pertenece al usuario`);
-          }
-        }
-
-        await instance.update(data);
-        return instance;
-      }
-      const exists = await this.model.findByPk(id);
-      if (!exists) throw new NotFoundError();
-      throw new OwnershipError();
-    }
-
-    throw new Error('Configuración de ownership inválida');
-  }
-
-
-  async updateAllMineFields(id, fields, userId) {
-    if (!this.ownershipConfig) {
-      throw new Error('Ownership no definido para este modelo');
-    }
-
-    const cfg = this.ownershipConfig;
-    const pkField = this.model.primaryKeyAttribute;
 
     if (cfg.type === 'direct') {
       const ownerField = cfg.field;
-      if (fields[ownerField] !== undefined && fields[ownerField] !== userId) {
+
+      if (sanitized[ownerField] !== undefined) {
         throw new OwnershipError('No puedes cambiar el propietario del recurso');
       }
 
-      const cleanFields = { ...fields };
-      if (fields[ownerField] !== undefined) {
-        delete cleanFields[ownerField];
-      }
-
-      const [affected] = await this.model.update(cleanFields, {
+      const [affected] = await this.model.update(sanitized, {
         where: {
           [pkField]: id,
           [ownerField]: userId
@@ -333,22 +319,128 @@ class BaseService {
       });
 
       if (instance) {
-        if (cfg.create && cfg.create.foreignKey && fields[cfg.create.foreignKey] !== undefined) {
+        if (
+          cfg.create &&
+          cfg.create.foreignKey &&
+          sanitized[cfg.create.foreignKey] !== undefined
+        ) {
           const relatedModel = this.models[cfg.include.model];
-          const newRelatedId = fields[cfg.create.foreignKey];
+          const newRelatedId = sanitized[cfg.create.foreignKey];
+
           const related = await relatedModel.findOne({
-            where: { id: newRelatedId, [cfg.include.whereField]: userId },
+            where: {
+              [relatedModel.primaryKeyAttribute]: newRelatedId,
+              [cfg.include.whereField]: userId
+            },
           });
+
           if (!related) {
             const existsRelated = await relatedModel.findByPk(newRelatedId);
-            if (!existsRelated) throw new NotFoundError(`${cfg.include.model} no existe`);
-            throw new OwnershipError(`${cfg.include.model} no pertenece al usuario`);
+
+            if (!existsRelated) {
+              throw new NotFoundError(`${cfg.include.model} no existe`);
+            }
+
+            throw new OwnershipError(
+              `${cfg.include.model} no pertenece al usuario`
+            );
           }
         }
 
-        await instance.update(fields);
+        await instance.update(sanitized);
         return instance;
       }
+
+      const exists = await this.model.findByPk(id);
+      if (!exists) throw new NotFoundError();
+      throw new OwnershipError();
+    }
+
+    throw new Error('Configuración de ownership inválida');
+  }
+
+  async updateAllMineFields(id, fields, userId) {
+    if (!this.ownershipConfig) {
+      throw new Error('Ownership no definido para este modelo');
+    }
+
+    const cfg = this.ownershipConfig;
+    const pkField = this.model.primaryKeyAttribute;
+
+    const allowed = this.allowedUpdateFields?.length
+      ? this.allowedUpdateFields
+      : this.allowedFields;
+
+    const sanitized = this.sanitize(fields, allowed);
+
+    if (Object.keys(sanitized).length !== Object.keys(fields).length) {
+      throw new BadRequestError('Campos no permitidos en la solicitud');
+    }
+
+    if (cfg.type === 'direct') {
+      const ownerField = cfg.field;
+
+      if (sanitized[ownerField] !== undefined) {
+        throw new OwnershipError('No puedes cambiar el propietario del recurso');
+      }
+
+      const [affected] = await this.model.update(sanitized, {
+        where: {
+          [pkField]: id,
+          [ownerField]: userId
+        },
+      });
+
+      if (affected > 0) {
+        return await this.model.findByPk(id);
+      }
+
+      const exists = await this.model.findByPk(id);
+      if (!exists) throw new NotFoundError();
+      throw new OwnershipError();
+    }
+
+    if (cfg.type === 'join') {
+      const ownershipQuery = this.buildOwnershipQuery(userId);
+
+      const instance = await this.model.findOne({
+        where: { [pkField]: id, ...(ownershipQuery.where || {}) },
+        ...(ownershipQuery.include ? { include: ownershipQuery.include } : {}),
+      });
+
+      if (instance) {
+        if (
+          cfg.create &&
+          cfg.create.foreignKey &&
+          sanitized[cfg.create.foreignKey] !== undefined
+        ) {
+          const relatedModel = this.models[cfg.include.model];
+          const newRelatedId = sanitized[cfg.create.foreignKey];
+
+          const related = await relatedModel.findOne({
+            where: {
+              [relatedModel.primaryKeyAttribute]: newRelatedId,
+              [cfg.include.whereField]: userId
+            },
+          });
+
+          if (!related) {
+            const existsRelated = await relatedModel.findByPk(newRelatedId);
+
+            if (!existsRelated) {
+              throw new NotFoundError(`${cfg.include.model} no existe`);
+            }
+
+            throw new OwnershipError(
+              `${cfg.include.model} no pertenece al usuario`
+            );
+          }
+        }
+
+        await instance.update(sanitized);
+        return instance;
+      }
+
       const exists = await this.model.findByPk(id);
       if (!exists) throw new NotFoundError();
       throw new OwnershipError();

@@ -4,10 +4,18 @@ const storageService = require('./storageService');
 const { Op } = require('sequelize');
 const NotFoundError = require('../validators/notFoundError');
 const validarCamposModelo = require('../validators/modelValidator');
+const logger = require('./../utils/logger');
 
 class ImagenAdicionalVinoService extends BaseService {
   constructor() {
     super(ImagenAdicionalVino);
+    this.allowedFields = [
+      'id_vino',
+      'url_img'
+    ];
+    this.allowedUpdateFields = [
+      'url_img'
+    ];
   }
 
   async _isKeyReferencedElsewhere(oldKeyOrUrl, idExcluded = null) {
@@ -75,7 +83,7 @@ class ImagenAdicionalVinoService extends BaseService {
     } catch (err) {
       await t.rollback();
       if (uploadedUrl) {
-        try { await storageService.delete(uploadedUrl); } catch (e) { console.error('Compensating delete failed:', e); }
+        try { await storageService.delete(uploadedUrl); } catch (e) { logger.error({ err: e, url: uploadedUrl }, 'Error al eliminar imagen subida'); }
       }
       throw err;
     }
@@ -99,14 +107,41 @@ class ImagenAdicionalVinoService extends BaseService {
   }
 
   async delete(id) {
-    const imagen = await this.model.findByPk(id);
-    if (!imagen) throw new NotFoundError('Imagen adicional no encontrada');
-    const usedElsewhere = await this._isKeyReferencedElsewhere(imagen.url_img, id);
-    if (!usedElsewhere && imagen.url_img) {
-      await storageService.delete(imagen.url_img);
-    }
+    const t = await sequelize.transaction();
 
-    return imagen.destroy();
+    try {
+      const imagen = await this.model.findByPk(id, { transaction: t });
+      if (!imagen) throw new NotFoundError('Imagen adicional no encontrada');
+
+      let urlToDelete = null;
+
+      const usedElsewhere = await this._isKeyReferencedElsewhere(
+        imagen.url_img,
+        id
+      );
+
+      if (!usedElsewhere && imagen.url_img) {
+        urlToDelete = imagen.url_img;
+      }
+
+      await imagen.destroy({ transaction: t });
+
+      await t.commit();
+
+      if (urlToDelete) {
+        try {
+          await storageService.delete(urlToDelete);
+        } catch (err) {
+          logger.error({ err, url: urlToDelete }, 'Error eliminando imagen en storage');
+        }
+      }
+
+      return { message: 'Imagen eliminada correctamente' };
+
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   }
 }
 

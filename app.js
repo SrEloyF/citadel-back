@@ -6,12 +6,16 @@ const cors = require('cors');
 const authMiddleware = require('./auth/authMiddleware');
 const verifyCsrf = require('./auth/csrfMiddleware');
 const authorizeRoles = require('./auth/authRoles');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const logger = require('./utils/logger');
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '32kb' }));
 app.use(cookieParser());
 app.set("trust proxy", 1);
+app.use(helmet());
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',')
@@ -20,9 +24,29 @@ const allowedOrigins = process.env.CORS_ORIGIN
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
+  maxAge: 86400,
 }));
 
 // Rutas REST
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+});
+app.use(globalLimiter);
+
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
+app.use((err, req, res, next) => {
+  logger.error({ err: err }, 'Error al procesar la solicitud');
+  res.status(err.statusCode || 500).json({
+    error: process.env.NODE_ENV === 'production'
+      ? 'Error interno del servidor'
+      : err.message
+  });
+});
 
 // Rutas para autenticación
 app.use('/auth', require('./routes/authRoutes'));
