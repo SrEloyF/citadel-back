@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --setupFiles ./tests/setup.js",
+    "test": "cross-env NODE_ENV=test jest --setupFiles ./tests/setup.js --runInBand --detectOpenHandles",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },

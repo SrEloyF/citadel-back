@@ -1,5 +1,5 @@
 const authService = require('../services/authService');
-const generateCsrfToken = require('../auth/csrfUtils');
+const { generateCsrfToken, signToken } = require('../auth/csrfUtils');
 const usuarioService = require('../services/usuarioService');
 const validarCamposModelo = require('../validators/modelValidator');
 const isProd = process.env.NODE_ENV === 'production';
@@ -9,7 +9,8 @@ const refreshCookieOptions = {
   httpOnly: true,
   secure: isProd,
   sameSite: isProd ? 'none' : 'lax',
-  path: '/'
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000
 };
 
 const csrfCookieOptions = {
@@ -63,7 +64,8 @@ const login = async (req, res) => {
       });
     }
 
-    const csrfToken = generateCsrfToken();
+    const rawCsrfToken = generateCsrfToken();
+    const signedCsrfToken = `${rawCsrfToken}.${signToken(rawCsrfToken)}`;
 
     res.cookie(
       'refreshToken',
@@ -73,7 +75,7 @@ const login = async (req, res) => {
 
     res.cookie(
       'XSRF-TOKEN',
-      csrfToken,
+      signedCsrfToken,
       csrfCookieOptions
     );
 
@@ -89,22 +91,29 @@ const login = async (req, res) => {
   }
 };
 
-const refresh = (req, res) => {
-  const refreshToken = req.cookies?.refreshToken;
+const refresh = async (req, res) => {
+  const oldRefreshToken = req.cookies?.refreshToken;
 
-  if (!refreshToken) {
+  if (!oldRefreshToken) {
     return res.status(401).json({
       error: 'Refresh token requerido'
     });
   }
 
   try {
-    const accessToken = authService.refreshAccessToken(refreshToken);
-    const csrfToken = generateCsrfToken();
+    const { accessToken, refreshToken } = await authService.refreshAccessToken(oldRefreshToken);
+    const rawCsrfToken = generateCsrfToken();
+    const signedCsrfToken = `${rawCsrfToken}.${signToken(rawCsrfToken)}`;
+
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      refreshCookieOptions
+    );
 
     res.cookie(
       'XSRF-TOKEN',
-      csrfToken,
+      signedCsrfToken,
       csrfCookieOptions
     );
 
@@ -121,7 +130,10 @@ const refresh = (req, res) => {
   }
 };
 
-const logout = (req, res) => {
+const logout = async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+  await authService.logout(refreshToken);
+
   res.clearCookie('XSRF-TOKEN', csrfCookieOptions);
   res.clearCookie('refreshToken', refreshCookieOptions);
   res.status(204).end();

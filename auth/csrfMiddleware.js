@@ -1,9 +1,5 @@
 const crypto = require('crypto');
-const SECRET = process.env.CSRF_SECRET;
-
-function signToken(token) {
-  return crypto.createHmac('sha256', SECRET).update(token).digest('hex');
-}
+const { signToken } = require('./csrfUtils');
 
 const verifyCsrf = (req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();

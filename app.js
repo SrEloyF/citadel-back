@@ -35,19 +35,6 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Ruta no encontrada' });
-});
-
-app.use((err, req, res, next) => {
-  logger.error({ err: err }, 'Error al procesar la solicitud');
-  res.status(err.statusCode || 500).json({
-    error: process.env.NODE_ENV === 'production'
-      ? 'Error interno del servidor'
-      : err.message
-  });
-});
-
 // Rutas para autenticación
 app.use('/auth', require('./routes/authRoutes'));
 
@@ -74,5 +61,18 @@ app.use('/admin/carritos', authMiddleware, authorizeRoles('A'), verifyCsrf, requ
 app.use('/admin/carritosproductos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/carritoProductoRoutes'));
 app.use('/admin/pagos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/pagoRoutes'));
 app.use('/admin/usuarios', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/usuarioRoutes'));
+
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
+app.use((err, req, res, next) => {
+  logger.error({ err: err }, 'Error al procesar la solicitud');
+  res.status(err.statusCode || 500).json({
+    error: process.env.NODE_ENV === 'production'
+      ? 'Error interno del servidor'
+      : err.message
+  });
+});
 
 module.exports = app;

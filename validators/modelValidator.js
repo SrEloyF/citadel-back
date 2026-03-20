@@ -9,8 +9,16 @@ function validarCamposModelo(model, body, skipFields = []) {
   const atributos = model.rawAttributes;
   const errores = [];
 
+  const timestampFields = [];
+  if (model.options.timestamps) {
+    if (model.options.createdAt !== false) timestampFields.push(model.options.createdAt || 'createdAt');
+    if (model.options.updatedAt !== false) timestampFields.push(model.options.updatedAt || 'updatedAt');
+  }
+
   for (const key in atributos) {
     if (skipFields.includes(key)) continue;
+    if (timestampFields.includes(key)) continue;
+
     const atributo = atributos[key];
 
     if (atributo.autoIncrement || atributo.defaultValue !== undefined) continue;

@@ -66,6 +66,10 @@ module.exports = (sequelize, DataTypes) => {
     ciudad: {
       type: DataTypes.STRING(50),
       allowNull: true
+    },
+    refresh_token: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,
@@ -100,10 +104,11 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     defaultScope: {
-      attributes: { exclude: ['hash_contrasena'] }
+      attributes: { exclude: ['hash_contrasena', 'refresh_token'] }
     },
     scopes: {
-      withPassword: { attributes: {} }
+      withPassword: { attributes: {} },
+      withRefreshToken: { attributes: { include: ['refresh_token'] } }
     },
   });
 

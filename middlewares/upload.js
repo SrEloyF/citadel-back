@@ -1,5 +1,4 @@
 const multer = require('multer');
-const { fileTypeFromBuffer } = require('file-type');
 
 const storage = multer.memoryStorage();
 
@@ -27,6 +26,7 @@ const secureUpload = {
         if (!req.file) return next();
 
         try {
+          const { fileTypeFromBuffer } = await import('file-type');
           const type = await fileTypeFromBuffer(req.file.buffer);
 
           if (
@@ -38,7 +38,7 @@ const secureUpload = {
           }
 
           return next();
-        } catch (error) {
+        } catch (error) { 
           return next(error);
         }
       });
