@@ -43,7 +43,8 @@ async function createAdminAgent() {
   const xsrfCookie = cookies.find(c => c.startsWith('XSRF-TOKEN='));
 
   if (xsrfCookie) {
-    const xsrfToken = decodeURIComponent(xsrfCookie.split(';')[0].split('=')[1]);
+    const xsrfTokenValue = decodeURIComponent(xsrfCookie.split(';')[0].split('=')[1]);
+    const xsrfToken = xsrfTokenValue.split('.')[0];
     agent.set('X-XSRF-TOKEN', xsrfToken);
   }
 
