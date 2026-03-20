@@ -22,7 +22,7 @@ module.exports = {
         allowNull: false
       },
       precio: {
-        type: Sequelize.DOUBLE,
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false
       },
       stock: {

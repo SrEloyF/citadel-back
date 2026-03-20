@@ -4,10 +4,31 @@ const storageService = require('./storageService');
 const { Op } = require('sequelize');
 const NotFoundError = require('../validators/notFoundError');
 const validarCamposModelo = require('../validators/modelValidator');
+const logger = require('./../utils/logger');
 
 class VinoService extends BaseService {
   constructor() {
     super(Vino);
+    this.allowedFields = [
+      'id_sabor',
+      'id_presentacion',
+      'nombre',
+      'descripcion',
+      'volumen_ml',
+      'stock',
+      'estado',
+      'url_img_principal'
+    ];
+    this.allowedUpdateFields = [
+      'id_sabor',
+      'id_presentacion',
+      'nombre',
+      'descripcion',
+      'volumen_ml',
+      'stock',
+      'estado',
+      'url_img_principal'
+    ];
   }
 
   async _isKeyReferencedElsewhere(oldKeyOrUrl, idExcluded = null) {
@@ -71,7 +92,7 @@ class VinoService extends BaseService {
     } catch (err) {
       await t.rollback();
       if (uploadedUrl) {
-        try { await storageService.delete(uploadedUrl); } catch (e) { console.error('Compensating delete failed:', e); }
+        try { await storageService.delete(uploadedUrl); } catch (e) { logger.error({ err: e, url: uploadedUrl }, 'Error al eliminar imagen subida'); }
       }
       throw err;
     }
@@ -95,27 +116,62 @@ class VinoService extends BaseService {
   }
 
   async delete(id) {
-    const vino = await this.model.findByPk(id);
-    if (!vino) throw new NotFoundError('Vino no encontrado');
+    const t = await sequelize.transaction();
 
-    const usedElsewhere = await this._isKeyReferencedElsewhere(vino.url_img_principal, id);
-    if (!usedElsewhere && vino.url_img_principal) {
-      await storageService.delete(vino.url_img_principal);
-    }
+    try {
+      const vino = await this.model.findByPk(id, { transaction: t });
+      if (!vino) throw new NotFoundError('Vino no encontrado');
 
-    const imagenes = await ImagenAdicionalVino.findAll({
-      where: { id_vino: id }
-    });
+      const imagenes = await ImagenAdicionalVino.findAll({
+        where: { id_vino: id },
+        transaction: t
+      });
 
-    for (const img of imagenes) {
-      const usedElsewhere = await this._isKeyReferencedElsewhere(img.url_img, img.id_imagen);
+      const urlsToDelete = [];
 
-      if (!usedElsewhere && img.url_img) {
-        await storageService.delete(img.url_img);
+      const usedElsewherePrincipal = await this._isKeyReferencedElsewhere(
+        vino.url_img_principal,
+        id
+      );
+
+      if (!usedElsewherePrincipal && vino.url_img_principal) {
+        urlsToDelete.push(vino.url_img_principal);
       }
-    }
 
-    return vino.destroy();
+      for (const img of imagenes) {
+        const usedElsewhere = await this._isKeyReferencedElsewhere(
+          img.url_img,
+          img.id_imagen
+        );
+
+        if (!usedElsewhere && img.url_img) {
+          urlsToDelete.push(img.url_img);
+        }
+      }
+
+      await ImagenAdicionalVino.destroy({
+        where: { id_vino: id },
+        transaction: t
+      });
+
+      await vino.destroy({ transaction: t });
+
+      await t.commit();
+
+      for (const url of urlsToDelete) {
+        try {
+          await storageService.delete(url);
+        } catch (err) {
+          logger.error({ err, url }, 'Error eliminando imagen en storage');
+        }
+      }
+
+      return { message: 'Vino eliminado correctamente' };
+
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   }
 }
 

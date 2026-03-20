@@ -21,7 +21,7 @@ module.exports = {
         allowNull: false
       },
       monto: {
-        type: Sequelize.DOUBLE,
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false
       },
       estado: {

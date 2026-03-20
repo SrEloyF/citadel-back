@@ -27,7 +27,7 @@ module.exports = {
         defaultValue: 1
       },
       precio_venta: {
-        type: Sequelize.DOUBLE,
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0
       },

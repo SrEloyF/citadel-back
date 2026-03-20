@@ -1,4 +1,5 @@
 const validarCamposModelo = require('../validators/modelValidator');
+const logger = require('./../utils/logger');
 
 class BaseController {
   constructor(service) {
@@ -10,7 +11,7 @@ class BaseController {
       const result = await this.service.create(req.body, req.file || null);
       res.status(201).json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al crear registro');
       res.status(400).json({
         error: err.message,
         msg: err.name || undefined,
@@ -25,7 +26,8 @@ class BaseController {
 
       if (isPaginated) {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const MAX_LIMIT = 100;
+        const limit = Math.min(parseInt(req.query.limit) || 10, MAX_LIMIT);
         const offset = (page - 1) * limit;
 
         const result = await this.service.findAll(limit, offset);
@@ -46,7 +48,7 @@ class BaseController {
         return res.json(result);
       }
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al consultar todos los registros');
       res.status(500).json({ error: err.message });
     }
   };
@@ -57,7 +59,7 @@ class BaseController {
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al consultar registro por ID');
       res.status(500).json({ error: err.message });
     }
   };
@@ -69,7 +71,7 @@ class BaseController {
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al actualizar registro');
       res.status(400).json({
         error: err.message,
         msg: err.name || undefined,
@@ -84,32 +86,10 @@ class BaseController {
       if (!success) return res.status(404).json({ error: 'No encontrado' });
       res.status(204).send();
     } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: err.message });
+      logger.error({ err }, 'Error al eliminar registro');
+      res.status(500).json({ error: 'Error al eliminar registro' });
     }
   };
-
-  /*
-  updateField = async (req, res) => {
-    const { campo, valor } = req.body;
-
-    if (!campo || valor === undefined) {
-      return res.status(400).json({ error: "Se requiere 'campo' y 'valor'" });
-    }
-
-    try {
-      const result = await this.service.updateField(req.params.id, campo, valor, req.file || null);
-      if (!result) return res.status(404).json({ error: 'No encontrado' });
-      res.json(result);
-    } catch (err) {
-      console.log(err);
-      res.status(400).json({
-        error: err.message,
-        msg: err.name || undefined,
-        original: err.original?.sqlMessage || undefined
-      });
-    }
-  };*/
 
   findByField = async (req, res) => {
     const { campo, valor } = req.body;
@@ -122,8 +102,8 @@ class BaseController {
       const result = await this.service.findByField(campo, valor);
       res.json(result);
     } catch (err) {
-      console.log(err);
-      res.status(400).json({ error: err.message });
+      logger.error({ err }, 'Error al buscar por campo');
+      res.status(400).json({ error: 'Error al buscar por campo' });
     }
   };
 
@@ -134,12 +114,8 @@ class BaseController {
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
-      console.log(err);
-      res.status(400).json({
-        error: err.message,
-        msg: err.name || undefined,
-        original: err.original?.sqlMessage || undefined
-      });
+      logger.error({ err }, 'Error al actualizar campos');
+      res.status(400).json({ error: 'Error al actualizar campos' });
     }
   };
 
@@ -147,11 +123,34 @@ class BaseController {
   findAllMine = async (req, res) => {
     try {
       const userId = req.user.id;
+      const isPaginated = req.query.page !== undefined || req.query.limit !== undefined;
+
+      if (isPaginated) {
+        const page = parseInt(req.query.page) || 1;
+        const MAX_LIMIT = 100;
+        const limit = Math.min(parseInt(req.query.limit) || 10, MAX_LIMIT);
+        const offset = (page - 1) * limit;
+
+        const result = await this.service.findAllMine(userId, limit, offset);
+        const total = await this.service.countMine(userId);
+        const totalPages = Math.ceil(total / limit);
+
+        return res.json({
+          data: result,
+          pagination: {
+            page: page,
+            limit: limit,
+            total: total,
+            totalPages: totalPages,
+          },
+        });
+      }
+
       const result = await this.service.findAllMine(userId);
       res.json(result);
     } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: err.message });
+      logger.error({ err }, 'Error al consultar registros del usuario');
+      res.status(500).json({ error: 'Error al consultar registros del usuario' });
     }
   };
 
@@ -164,7 +163,7 @@ class BaseController {
       res.json(result);
 
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al consultar registro del usuario por ID');
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
@@ -180,7 +179,7 @@ class BaseController {
 
       return res.status(201).json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al crear registro del usuario');
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
@@ -199,7 +198,8 @@ class BaseController {
       const result = await this.service.findAllMineByField(campo, valor, userId);
       return res.json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al buscar por campo en registros del usuario');
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
     }
@@ -212,7 +212,7 @@ class BaseController {
       const result = await this.service.updateMine(id, req.body, userId);
       return res.json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al actualizar registro del usuario');
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
@@ -229,7 +229,7 @@ class BaseController {
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al actualizar campos del registro del usuario');
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
@@ -245,7 +245,7 @@ class BaseController {
       if (success) return res.status(204).send();
       return res.status(500).json({ error: 'No se pudo eliminar'});
     } catch (err) {
-      console.log(err);
+      logger.error({ err }, 'Error al eliminar registro del usuario');
       if (err.name === 'NotFoundError') return res.status(404).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: err.message });
       return res.status(500).json({ error: 'Error interno del servidor: ' + err.message });

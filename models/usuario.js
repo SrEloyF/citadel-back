@@ -66,13 +66,18 @@ module.exports = (sequelize, DataTypes) => {
     ciudad: {
       type: DataTypes.STRING(50),
       allowNull: true
+    },
+    refresh_token: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,
     modelName: 'Usuario',
     tableName: 'usuarios',
-    timestamps: false,
+    timestamps: true,
     createdAt: 'fecha_creacion',
+    updatedAt: false,
 
     hooks: {
       beforeCreate: async (usuario) => {
@@ -97,7 +102,14 @@ module.exports = (sequelize, DataTypes) => {
           );
         }
       }
-    }
+    },
+    defaultScope: {
+      attributes: { exclude: ['hash_contrasena', 'refresh_token'] }
+    },
+    scopes: {
+      withPassword: { attributes: {} },
+      withRefreshToken: { attributes: { include: ['refresh_token'] } }
+    },
   });
 
   return Usuario;
