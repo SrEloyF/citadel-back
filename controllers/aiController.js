@@ -8,17 +8,20 @@ const getAdminAiResponse = async (req, res) => {
 
   try {
     const result = await processAiRequest(prompt, true);
-    logger.info(`###################`);
     logger.info('Respuesta final (Admin):');
     logger.info(result);
-    logger.info(`###################`);
     let final = result;
     if (typeof final === 'string') {
       final = final
         .replace(/^```(?:json)?\s*/i, '')
         .replace(/```\s*$/, '')
         .trim();
-      final = JSON.parse(final);
+
+      if (isJson(final)) {
+        final = JSON.parse(final);
+      } else {
+        return res.json({ response: final });
+      }
     }
     return res.json(final);
   } catch (err) {
@@ -34,10 +37,8 @@ const getPublicAiResponse = async (req, res) => {
 
   try {
     const result = await processAiRequest(prompt, false);
-    logger.info(`###################`);
     logger.info('Respuesta final (Public):');
     logger.info(result);
-    logger.info(`###################`);
     const cleanedResult = typeof result === 'string'
       ? result.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
       : result;
@@ -48,5 +49,14 @@ const getPublicAiResponse = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
+function isJson(str) {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 module.exports = { getAdminAiResponse, getPublicAiResponse };

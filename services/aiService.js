@@ -3,6 +3,8 @@ const { adminPool, publicPool, dbType } = require('../config/bdAi');
 const { sanitizeSqlQuery } = require('../utils/sqlSanitizer');
 const logger = require('./../utils/logger');
 const tiktoken = require("tiktoken");
+const dotenv = require("dotenv");
+dotenv.config();
 
 async function executeSql(query, isAdmin) {
   try {
@@ -55,14 +57,14 @@ async function processAiRequest(prompt, isAdmin = false) {
     }
   }];
 
-  const modelo = process.env.MODEL_NAME || "deepseek/deepseek-chat";
+  const modelo = process.env.MODEL_NAME || "nvidia/nemotron-3-super-120b-a12b:free";
   let response = await openai.chat.completions.create({
     model: modelo,
     messages: messages,
     tools: tools,
     tool_choice: { type: "function", function: { name: "query_database" } },
     temperature: 0,
-    max_tokens: 7000
+    max_tokens: process.env.MAX_TOKENS
   });
 
   let responseMessage = response.choices[0].message;
@@ -96,7 +98,7 @@ async function processAiRequest(prompt, isAdmin = false) {
       messages: messages,
       tools: tools,
       tool_choice: "auto",
-      max_tokens: 15000,
+      max_tokens: process.env.MAX_TOKENS
     });
     responseMessage = nextResponse.choices[0].message;
     iteraciones++;
