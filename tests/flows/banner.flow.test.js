@@ -171,6 +171,14 @@ describe('Banner Flow (Admin CRUD & Expiration)', () => {
     const loginRes = await normalAgent.post('/auth/login').send({ email: userEmail, contrasena: userPassword });
     normalAgent.set('Authorization', `Bearer ${loginRes.body.accessToken}`);
 
+    const cookies = loginRes.headers['set-cookie'] || [];
+    const xsrfCookie = cookies.find(c => c.startsWith('XSRF-TOKEN='));
+    if (xsrfCookie) {
+      const xsrfTokenValue = decodeURIComponent(xsrfCookie.split(';')[0].split('=')[1]);
+      const xsrfToken = xsrfTokenValue.split('.')[0];
+      normalAgent.set('X-XSRF-TOKEN', xsrfToken);
+    }
+
     await normalAgent
       .get('/admin/banners')
       .expect(403);

@@ -75,25 +75,40 @@ class VinoService extends BaseService {
   async create(data, file = null) {
     const t = await sequelize.transaction();
     let uploadedUrl = null;
+
+    const cleanData = this.sanitize(data);
+
     try {
       if (file) {
         uploadedUrl = await storageService.upload(file, 'vinos');
-        data.url_img_principal = uploadedUrl;
-      } else if (data.url_img_principal && !data.url_img_principal.startsWith('http')) {
-        data.url_img_principal = `${process.env.R2_PUBLIC_URL}/${data.url_img_principal}`;
+        cleanData.url_img_principal = uploadedUrl;
+      } else if (
+        cleanData.url_img_principal &&
+        !cleanData.url_img_principal.startsWith('http')
+      ) {
+        cleanData.url_img_principal = `${process.env.R2_PUBLIC_URL}/${cleanData.url_img_principal}`;
       }
 
-      validarCamposModelo(this.model, data);
+      validarCamposModelo(this.model, cleanData);
 
-      const result = await this.model.create(data, { transaction: t });
+      const result = await this.model.create(cleanData, { transaction: t });
 
       await t.commit();
       return result;
     } catch (err) {
       await t.rollback();
+
       if (uploadedUrl) {
-        try { await storageService.delete(uploadedUrl); } catch (e) { logger.error({ err: e, url: uploadedUrl }, 'Error al eliminar imagen subida'); }
+        try {
+          await storageService.delete(uploadedUrl);
+        } catch (e) {
+          logger.error(
+            { err: e, url: uploadedUrl },
+            'Error al eliminar imagen subida'
+          );
+        }
       }
+
       throw err;
     }
   }
@@ -104,9 +119,12 @@ class VinoService extends BaseService {
 
     const newUrl = await this._resolveImage(fields, file, vino.url_img_principal, vino.id_vino);
 
-    Object.keys(fields).forEach(key => {
-      if (key in this.model.rawAttributes) {
-        vino[key] = fields[key];
+    const allowed = this.allowedUpdateFields || this.allowedFields;
+    const cleanFields = this.sanitize(fields);
+
+    Object.keys(cleanFields).forEach(key => {
+      if (allowed.includes(key)) {
+        vino[key] = cleanFields[key];
       }
     });
 

@@ -1,5 +1,4 @@
 const requireEnv = require('./../validators/validateEnv');
-
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const JWT_REFRESH_SECRET = requireEnv('JWT_REFRESH_SECRET');
 const accessExpiresIn = requireEnv('JWT_ACCESS_TIME');

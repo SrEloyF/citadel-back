@@ -4,6 +4,16 @@ const logger = require('./utils/logger');
 
 const PORT = process.env.PORT || 3000;
 
+process.on('unhandledRejection', (err) => {
+  logger.fatal({ err }, 'Unhandled Rejection');
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'Uncaught Exception');
+  process.exit(1);
+});
+
 async function startServer() {
   try {
     await db.sequelize.authenticate();

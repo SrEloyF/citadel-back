@@ -3,7 +3,7 @@ const pg = require("pg");
 const dotenv = require("dotenv");
 const logger = require('./../utils/logger');
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const dbType = String(process.env.DB_TYPE || "").trim().toLowerCase();
 

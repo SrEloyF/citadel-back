@@ -1,7 +1,7 @@
 function requireEnv(name) {
   const value = process.env[name];
 
-  if (value === undefined) {
+  if (value === undefined || value === '') {
     throw new Error(`La variable de entorno ${name} es requerida`);
   }
 

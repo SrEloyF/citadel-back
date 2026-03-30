@@ -26,7 +26,10 @@ const verifyCsrf = (req, res, next) => {
     return res.status(403).json({ error: 'Token CSRF inválido' });
   }
 
-  if (csrfHeader !== token) {
+  const c = Buffer.from(csrfHeader);
+  const d = Buffer.from(token);
+
+  if (c.length !== d.length || !crypto.timingSafeEqual(c, d)) {
     return res.status(403).json({ error: 'Token CSRF inválido' });
   }
 

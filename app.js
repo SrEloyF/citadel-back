@@ -9,17 +9,18 @@ const authorizeRoles = require('./auth/authRoles');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const logger = require('./utils/logger');
+const requireEnv = require('./validators/validateEnv');
 
 const app = express();
 
 app.use(express.json({ limit: '32kb' }));
 app.use(cookieParser());
-app.set("trust proxy", 1);
+if (process.env.TRUST_PROXY) {
+  app.set("trust proxy", Number(process.env.TRUST_PROXY) || 1);
+}
 app.use(helmet());
 
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : [];
+const allowedOrigins = requireEnv('CORS_ORIGIN').split(',');
 
 app.use(cors({
   origin: allowedOrigins,

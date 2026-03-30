@@ -4,14 +4,16 @@ const { sanitizeSqlQuery } = require('../utils/sqlSanitizer');
 const logger = require('./../utils/logger');
 const tiktoken = require("tiktoken");
 const dotenv = require("dotenv");
-dotenv.config();
+dotenv.config({ quiet: true });
+
+const enc = tiktoken.get_encoding("cl100k_base");
 
 async function executeSql(query, isAdmin) {
   try {
     const safeQuery = sanitizeSqlQuery(query, isAdmin);
     const pool = isAdmin ? adminPool : publicPool;
 
-    logger.info(`-> Ejecutando SQL (${isAdmin ? 'Admin' : 'Public'}): ${safeQuery}`);
+    logger.debug(`-> Ejecutando SQL (${isAdmin ? 'Admin' : 'Public'}): ${safeQuery}`);
 
     if (dbType === "mysql") {
       const [rows] = await pool.query(safeQuery);
@@ -27,7 +29,7 @@ async function executeSql(query, isAdmin) {
 }
 
 async function processAiRequest(prompt, isAdmin = false) {
-  logger.info(`--- Solicitud recibida (${isAdmin ? 'Admin' : 'Public'}) ---`);
+  logger.debug(`--- Solicitud recibida (${isAdmin ? 'Admin' : 'Public'}) ---`);
   const systemPrompt = isAdmin ? adminSystemPrompt : publicSystemPrompt;
 
   const messages = [
@@ -35,14 +37,13 @@ async function processAiRequest(prompt, isAdmin = false) {
     { role: "user", content: prompt }
   ];
 
-  const enc = tiktoken.get_encoding("cl100k_base");
   let totalTokens = 0;
   messages.forEach(msg => {
     const tokens = enc.encode(msg.content);
     totalTokens += tokens.length;
-    logger.info(`[Token Count] Role: ${msg.role}, Tokens: ${tokens.length}`);
+    logger.debug(`[Token Count] Role: ${msg.role}, Tokens: ${tokens.length}`);
   });
-  logger.info(`[Token Count] Total tokens enviados: ${totalTokens}`);
+  logger.debug(`[Token Count] Total tokens enviados: ${totalTokens}`);
 
   const tools = [{
     type: "function",
@@ -64,7 +65,7 @@ async function processAiRequest(prompt, isAdmin = false) {
     tools: tools,
     tool_choice: { type: "function", function: { name: "query_database" } },
     temperature: 0,
-    max_tokens: process.env.MAX_TOKENS
+    max_tokens: parseInt(process.env.MAX_TOKENS) || 1024,
   });
 
   let responseMessage = response.choices[0].message;
@@ -91,14 +92,14 @@ async function processAiRequest(prompt, isAdmin = false) {
       const tokens = enc.encode(text);
       totalTokens += tokens.length;
     });
-    logger.info(`[Token Count] Tokens acumulados tras iteración ${iteraciones + 1}: ${totalTokens}`);
+    logger.debug(`[Token Count] Tokens acumulados tras iteración ${iteraciones + 1}: ${totalTokens}`);
 
     const nextResponse = await openai.chat.completions.create({
       model: modelo,
       messages: messages,
       tools: tools,
       tool_choice: "auto",
-      max_tokens: process.env.MAX_TOKENS
+      max_tokens: parseInt(process.env.MAX_TOKENS) || 1024,
     });
     responseMessage = nextResponse.choices[0].message;
     iteraciones++;

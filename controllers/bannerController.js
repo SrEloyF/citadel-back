@@ -33,9 +33,6 @@ class BannerController extends BaseController {
     }
   };
 
-  /**
-   * Endpoint para disparar manualmente la limpieza de banners expirados.
-   */
   purgeExpired = async (req, res, next) => {
     try {
       const result = await this.service.deleteExpired();
