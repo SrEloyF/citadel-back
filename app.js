@@ -42,6 +42,7 @@ app.use('/auth', require('./routes/authRoutes'));
 // Rutas públicas
 app.use('/public/precios', require('./routes/public/precioPublicRoutes'));
 app.use('/public/sabores', require('./routes/public/saborPublicRoutes'));
+app.use('/public/dulzores', require('./routes/public/dulzorPublicRoutes'));
 app.use('/public/presentaciones', require('./routes/public/presentacionPublicRoutes'));
 app.use('/public/vinos', require('./routes/public/vinoPublicRoutes'));
 app.use('/public/imagenesadicionalesvinos', require('./routes/public/imagenAdicionalVinoPublicRoutes'));
@@ -57,6 +58,7 @@ app.use('/me/usuario', authMiddleware, verifyCsrf, require('./routes/authenticat
 // Rutas para ADMIN
 app.use('/admin/presentaciones', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/presentacionRoutes'));
 app.use('/admin/sabores', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/saborRoutes'));
+app.use('/admin/dulzores', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/dulzorRoutes'));
 app.use('/admin/precios', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/precioRoutes'));
 app.use('/admin/vinos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/vinoRoutes'));
 app.use('/admin/imagenesadicionalesvinos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/imagenAdicionalVinoRoutes'));
@@ -72,7 +74,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  logger.error({ err: err }, 'Error al procesar la solicitud');
+  logger.error({ err }, 'Error al procesar la solicitud');
   res.status(err.statusCode || 500).json({
     error: process.env.NODE_ENV === 'production'
       ? 'Error interno del servidor'

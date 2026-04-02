@@ -1,9 +1,9 @@
 const BaseService = require('./BaseService');
-const { Sabor } = require('../models');
+const { Dulzor } = require('../models');
 
-class SaborService extends BaseService {
+class DulzorService extends BaseService {
   constructor() {
-    super(Sabor);
+    super(Dulzor);
     this.allowedFields = [
       'nombre'
     ];
@@ -13,4 +13,4 @@ class SaborService extends BaseService {
   }
 }
 
-module.exports = new SaborService();
+module.exports = new DulzorService();

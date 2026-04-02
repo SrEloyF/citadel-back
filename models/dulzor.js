@@ -2,17 +2,17 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Sabor extends Model {
+  class Dulzor extends Model {
     static associate(models) {
       this.hasMany(models.Vino, {
-        foreignKey: 'id_sabor'
+        foreignKey: 'id_dulzor'
       });
     }
   }
 
-  Sabor.init(
+  Dulzor.init(
     {
-      id_sabor: {
+      id_dulzor: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -29,11 +29,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: 'Sabor',
-      tableName: 'sabores',
+      modelName: 'Dulzor',
+      tableName: 'dulzores',
       timestamps: false
     }
   );
 
-  return Sabor;
+  return Dulzor;
 };

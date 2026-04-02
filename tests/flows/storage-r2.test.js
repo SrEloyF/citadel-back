@@ -1,13 +1,14 @@
 const path = require('path');
 const fs = require('fs');
 const { createAdminAgent } = require('../utils/adminAgentHelper');
-const { createSaborPresentacion } = require('../utils/createVinos');
+const { createProductRelations } = require('../utils/createVinos');
 const { Vino, sequelize } = require('../../models');
 const storageService = require('../../services/storageService');
 
 describe('Crud imágenes (R2)', () => {
   let agent;
   let sabor;
+  let dulzor;
   let presentacion;
 
   let vinoId;
@@ -21,8 +22,9 @@ describe('Crud imágenes (R2)', () => {
     const admin = await createAdminAgent();
     agent = admin.agent;
 
-    const rel = await createSaborPresentacion();
+    const rel = await createProductRelations();
     sabor = rel.sabor;
+    dulzor = rel.dulzor;
     presentacion = rel.presentacion;
 
     vinoId = null;
@@ -40,11 +42,12 @@ describe('Crud imágenes (R2)', () => {
 
     const res = await agent
       .post('/admin/vinos')
+      .field('sku', 'SKU-R2-1')
       .field('id_sabor', sabor.id_sabor)
+      .field('id_dulzor', dulzor.id_dulzor)
       .field('id_presentacion', presentacion.id_presentacion)
       .field('nombre', 'vino test integración')
       .field('descripcion', 'desc')
-      .field('volumen_ml', '750')
       .field('stock', '10')
       .attach('url_img_principal', img1)
       .expect(201);
@@ -66,11 +69,12 @@ describe('Crud imágenes (R2)', () => {
     const img1 = path.join(__dirname, '../fixtures/img.jpg');
     const createRes = await agent
       .post('/admin/vinos')
+      .field('sku', 'SKU-R2-2')
       .field('id_sabor', sabor.id_sabor)
+      .field('id_dulzor', dulzor.id_dulzor)
       .field('id_presentacion', presentacion.id_presentacion)
       .field('nombre', 'vino test integración')
       .field('descripcion', 'desc')
-      .field('volumen_ml', '750')
       .field('stock', '10')
       .attach('url_img_principal', img1)
       .expect(201);
@@ -103,11 +107,12 @@ describe('Crud imágenes (R2)', () => {
     const img1 = path.join(__dirname, '../fixtures/img.jpg');
     const createRes = await agent
       .post('/admin/vinos')
+      .field('sku', 'SKU-R2-3')
       .field('id_sabor', sabor.id_sabor)
+      .field('id_dulzor', dulzor.id_dulzor)
       .field('id_presentacion', presentacion.id_presentacion)
       .field('nombre', 'vino test integración')
       .field('descripcion', 'desc')
-      .field('volumen_ml', '750')
       .field('stock', '10')
       .attach('url_img_principal', img1)
       .expect(201);

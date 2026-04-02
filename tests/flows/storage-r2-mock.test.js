@@ -16,7 +16,7 @@ const path = require('path');
 const { createAdminAgent } = require('../utils/adminAgentHelper');
 const storageService = require('../../services/storageService');
 const { Vino, sequelize } = require('../../models');
-const { createSaborPresentacion } = require('../utils/createVinos');
+const { createProductRelations } = require('../utils/createVinos');
 
 describe('Crud imágenes (Mock)', () => {
 
@@ -35,16 +35,17 @@ describe('Crud imágenes (Mock)', () => {
 
   test('POST /admin/vinos crea vino y sube imagen (multipart form-data)', async () => {
     const { agent } = await createAdminAgent();
-    const { sabor, presentacion } = await createSaborPresentacion();
+    const { sabor, dulzor, presentacion } = await createProductRelations();
     const imgPath = path.join(__dirname, '../fixtures/img.jpg');
 
     const res = await agent
       .post('/admin/vinos')
+      .field('sku', 'TEST-SKU-1')
       .field('id_sabor', sabor.id_sabor)
+      .field('id_dulzor', dulzor.id_dulzor)
       .field('id_presentacion', presentacion.id_presentacion)
       .field('nombre', 'Vino Test')
       .field('descripcion', 'desc')
-      .field('volumen_ml', '750')
       .field('stock', '10')
       .attach('url_img_principal', imgPath)
       .expect(201);
@@ -57,13 +58,14 @@ describe('Crud imágenes (Mock)', () => {
 
   test('PATCH /admin/vinos/:id actualiza imagen y borra la anterior si no referenciada', async () => {
     const initialUrl = 'https://r2.test/vinos/old.jpg';
-    const { sabor, presentacion } = await createSaborPresentacion();
+    const { sabor, dulzor, presentacion } = await createProductRelations();
     const vino = await Vino.create({
+      sku: 'TEST-SKU-2',
       id_sabor: sabor.id_sabor,
+      id_dulzor: dulzor.id_dulzor,
       id_presentacion: presentacion.id_presentacion,
       nombre: 'VinoOld',
       descripcion: 'd',
-      volumen_ml: 750,
       stock: 5,
       url_img_principal: initialUrl
     });
@@ -84,13 +86,14 @@ describe('Crud imágenes (Mock)', () => {
 
   test('DELETE /admin/vinos/:id elimina registro y borra imagen si no referenciada', async () => {
     const initialUrl = 'https://r2.test/vinos/oldToDelete.jpg';
-    const { sabor, presentacion } = await createSaborPresentacion();
+    const { sabor, dulzor, presentacion } = await createProductRelations();
     const vino = await Vino.create({
+      sku: 'TEST-SKU-3',
       id_sabor: sabor.id_sabor,
+      id_dulzor: dulzor.id_dulzor,
       id_presentacion: presentacion.id_presentacion,
       nombre: 'VinoToDelete',
       descripcion: 'd',
-      volumen_ml: 500,
       stock: 2,
       url_img_principal: initialUrl
     });

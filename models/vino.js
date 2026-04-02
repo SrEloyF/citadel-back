@@ -5,9 +5,9 @@ module.exports = (sequelize, DataTypes) => {
   class Vino extends Model {
     static associate(models) {
       this.hasMany(models.ImagenAdicionalVino, { foreignKey: 'id_vino' });
-      this.hasMany(models.CarritoProducto, { foreignKey: 'id_vino' });
       this.hasMany(models.Precio, { foreignKey: 'id_vino' });
       this.belongsTo(models.Sabor, { foreignKey: 'id_sabor' });
+      this.belongsTo(models.Dulzor, { foreignKey: 'id_dulzor' });
       this.belongsTo(models.Presentacion, { foreignKey: 'id_presentacion' });
     }
   }
@@ -18,13 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
-    id_sabor: {
-      type: DataTypes.INTEGER,
+    sku: {
+      type: DataTypes.STRING,
       allowNull: false,
-    },
-    id_presentacion: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+      validate: { notEmpty: true }
     },
     nombre: {
       type: DataTypes.STRING,
@@ -32,28 +29,35 @@ module.exports = (sequelize, DataTypes) => {
       validate: { notEmpty: true }
     },
     descripcion: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false
-    },
-    volumen_ml: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: { min: 1 }
     },
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: { min: 0 }
     },
+    url_img_principal: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { isUrl: true }
+    },
     estado: {
       type: DataTypes.ENUM('D', 'A', 'P'),
       allowNull: false,
       defaultValue: 'D'
     },
-    url_img_principal: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      validate: { isUrl: true }
+    id_sabor: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    id_dulzor: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    id_presentacion: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     fecha_creacion: {
       type: DataTypes.DATE,
@@ -70,8 +74,8 @@ module.exports = (sequelize, DataTypes) => {
     indexes: [
     {
       unique: true,
-      fields: ['id_sabor', 'id_presentacion', 'volumen_ml'],
-      name: 'unique_sabor_presentacion_volumen'
+      fields: ['id_sabor', 'id_dulzor', 'id_presentacion'],
+      name: 'unique_sabor_dulzor_presentacion'
     }
   ]
   });

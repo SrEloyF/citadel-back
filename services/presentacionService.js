@@ -5,10 +5,12 @@ class PresentacionService extends BaseService {
   constructor() {
     super(Presentacion);
     this.allowedFields = [
-      'nombre'
+      'volumen_ml',
+      'botellas_por_caja'
     ];
     this.allowedUpdateFields = [
-      'nombre'
+      'volumen_ml',
+      'botellas_por_caja'
     ];
   }
 }

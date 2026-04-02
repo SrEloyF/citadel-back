@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class CarritoProducto extends Model {
     static associate(models) {
       this.belongsTo(models.Carrito, { foreignKey: 'id_carrito' });
-      this.belongsTo(models.Vino, { foreignKey: 'id_vino' });
+      this.belongsTo(models.Precio, { foreignKey: 'id_precio' });
     }
   }
 
@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    id_vino: {
+    id_precio: {
       type: DataTypes.INTEGER,
       allowNull: false
     },

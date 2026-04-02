@@ -6,12 +6,10 @@ class PrecioService extends BaseService {
     super(Precio);
     this.allowedFields = [
       'id_vino',
-      'tipo_venta',
       'cantidad_minima',
       'precio'
     ];
     this.allowedUpdateFields = [
-      'tipo_venta',
       'cantidad_minima',
       'precio'
     ];

@@ -10,23 +10,23 @@ class VinoService extends BaseService {
   constructor() {
     super(Vino);
     this.allowedFields = [
+      'sku',
       'id_sabor',
+      'id_dulzor',
       'id_presentacion',
       'nombre',
       'descripcion',
-      'volumen_ml',
       'stock',
-      'estado',
       'url_img_principal'
     ];
     this.allowedUpdateFields = [
+      'sku',
       'id_sabor',
+      'id_dulzor',
       'id_presentacion',
       'nombre',
       'descripcion',
-      'volumen_ml',
       'stock',
-      'estado',
       'url_img_principal'
     ];
   }

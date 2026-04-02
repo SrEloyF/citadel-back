@@ -8,7 +8,7 @@ class CarritoProductoService extends BaseService {
     super(CarritoProducto, ownershipConfig.CarritoProducto, models);
     this.allowedFields = [
       'id_carrito',
-      'id_vino',
+      'id_precio',
       'cantidad',
     ];
     this.allowedUpdateFields = [
