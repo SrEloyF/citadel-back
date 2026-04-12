@@ -29,7 +29,7 @@ describe('Crud imágenes (Mock)', () => {
   });
 
   beforeEach(async () => {
-    await Vino.destroy({ where: {} });
+    await sequelize.sync({ force: true });
     jest.clearAllMocks();
   });
 

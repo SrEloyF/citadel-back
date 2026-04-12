@@ -6,7 +6,8 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --setupFiles ./tests/setup.js --runInBand --detectOpenHandles",
     "start": "node index.js",
-    "dev": "cross-env NODE_ENV=development nodemon index.js"
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "prod": "cross-env NODE_ENV=production node index.js"
   },
   "keywords": [],
   "author": "",

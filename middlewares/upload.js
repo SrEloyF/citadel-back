@@ -38,7 +38,41 @@ const secureUpload = {
           }
 
           return next();
-        } catch (error) { 
+        } catch (error) {
+          return next(error);
+        }
+      });
+    };
+  },
+
+  fields: (fieldsConfig) => {
+    const middleware = multerUpload.fields(fieldsConfig);
+
+    return async (req, res, next) => {
+      middleware(req, res, async (err) => {
+        if (err) return next(err);
+
+        try {
+          const { fileTypeFromBuffer } = await import('file-type');
+
+          const files = req.files || {};
+
+          for (const field in files) {
+            for (const file of files[field]) {
+              const type = await fileTypeFromBuffer(file.buffer);
+
+              if (
+                !type ||
+                !type.mime.startsWith('image/') ||
+                type.mime === 'image/svg+xml'
+              ) {
+                return next(new Error('Archivo no es una imagen válida'));
+              }
+            }
+          }
+
+          return next();
+        } catch (error) {
           return next(error);
         }
       });

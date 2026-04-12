@@ -43,6 +43,9 @@ describe('Crud imágenes adicionales de vinos (R2)', () => {
 
   afterAll(async () => {
     await sequelize.close();
+    if (storageService.s3?.destroy) {
+      storageService.s3.destroy();
+    }
   });
 
   test('Crear imagen adicional de vino', async () => {

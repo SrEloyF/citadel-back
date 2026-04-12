@@ -33,7 +33,13 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: 'Presentacion',
       tableName: 'presentaciones',
-      timestamps: false
+      timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ['volumen_ml', 'botellas_por_caja']
+        }
+      ],
     }
   );
 

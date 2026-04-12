@@ -2,9 +2,7 @@ const { openai, adminSystemPrompt, publicSystemPrompt } = require('../config/ai'
 const { adminPool, publicPool, dbType } = require('../config/bdAi');
 const { sanitizeSqlQuery } = require('../utils/sqlSanitizer');
 const logger = require('./../utils/logger');
-const tiktoken = require("tiktoken");
-const dotenv = require("dotenv");
-dotenv.config({ quiet: true });
+const tiktoken = require('tiktoken');
 
 const enc = tiktoken.get_encoding("cl100k_base");
 

@@ -6,8 +6,13 @@ const router = generateCrudRoutes(vinoController, {
   exclude: ['create', 'update', 'updateFields']
 });
 
-router.post('/', upload.single('url_img_principal'), vinoController.create);
-router.put('/:id', upload.single('url_img_principal'), vinoController.update);
-router.patch('/:id', upload.single('url_img_principal'), vinoController.updateFields);
+const multer_config = upload.fields([
+  { name: 'url_img_principal', maxCount: 1 },
+  { name: 'imagen_adicionales', maxCount: 10 }
+]);
+
+router.post('/', multer_config, vinoController.create);
+router.put('/:id', multer_config, vinoController.update);
+router.patch('/:id', multer_config, vinoController.updateFields);
 
 module.exports = router;

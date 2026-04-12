@@ -1,8 +1,16 @@
+const dotenv = require('dotenv');
+dotenv.config({ path: '.env', quiet: true });
+dotenv.config({
+  path: `.env.${process.env.NODE_ENV}`,
+  override: true,
+  quiet: true
+});
+
 const app = require('./app');
 const db = require('./models');
 const logger = require('./utils/logger');
-
 const PORT = process.env.PORT || 3000;
+const { initPools } = require('./config/bdAi');
 
 process.on('unhandledRejection', (err) => {
   logger.fatal({ err }, 'Unhandled Rejection');
@@ -16,6 +24,7 @@ process.on('uncaughtException', (err) => {
 
 async function startServer() {
   try {
+    await initPools();
     await db.sequelize.authenticate();
     logger.info('Conexión a BD establecida correctamente.');
 
