@@ -63,29 +63,47 @@ class BannerService extends BaseService {
   async create(data, file = null) {
     const t = await sequelize.transaction();
     let uploadedUrl = null;
-    try {
-      validarCamposModelo(this.model, data, file ? ['url_img'] : []);
 
+    const cleanData = this.sanitize(data);
+
+    try {
       if (file) {
         uploadedUrl = await storageService.upload(file, 'banners');
-        data.url_img = uploadedUrl;
-      } else if (data.url_img && !data.url_img.startsWith('http')) {
-        data.url_img = `${process.env.R2_PUBLIC_URL}/${data.url_img}`;
+        cleanData.url_img = uploadedUrl;
+      } else if (
+        cleanData.url_img &&
+        !cleanData.url_img.startsWith('http')
+      ) {
+        cleanData.url_img = `${process.env.R2_PUBLIC_URL}/${cleanData.url_img}`;
       }
 
-      if (this.model.rawAttributes.url_img?.allowNull === false && !data.url_img) {
+      validarCamposModelo(this.model, cleanData, file ? ['url_img'] : []);
+
+      if (
+        this.model.rawAttributes.url_img?.allowNull === false &&
+        !cleanData.url_img
+      ) {
         throw new Error("El campo 'url_img' es obligatorio.");
       }
 
-      const result = await this.model.create(data, { transaction: t });
+      const result = await this.model.create(cleanData, { transaction: t });
 
       await t.commit();
       return result;
     } catch (err) {
       await t.rollback();
+
       if (uploadedUrl) {
-        try { await storageService.delete(uploadedUrl); } catch (e) { logger.error({ err: e, url: uploadedUrl }, 'Error al eliminar imagen subida'); }
+        try {
+          await storageService.delete(uploadedUrl);
+        } catch (e) {
+          logger.error(
+            { err: e, url: uploadedUrl },
+            'Error al eliminar imagen subida'
+          );
+        }
       }
+
       throw err;
     }
   }
@@ -96,9 +114,12 @@ class BannerService extends BaseService {
 
     const newUrl = await this._resolveImage(fields, file, banner.url_img, banner.id_imagen);
 
+    const allowed = this.allowedUpdateFields || this.allowedFields;
+    const cleanFields = this.sanitize(fields);
+
     Object.keys(fields).forEach(key => {
-      if (key in this.model.rawAttributes && this.allowedUpdateFields.includes(key)) {
-        banner[key] = fields[key];
+      if (allowed.includes(key)) {
+        banner[key] = cleanFields[key];
       }
     });
 
@@ -145,9 +166,6 @@ class BannerService extends BaseService {
     }
   }
 
-  /**
-   * Elimina banners que han expirado y borra sus imágenes de R2 si no están en uso.
-   */
   async deleteExpired() {
     const expiredBanners = await this.model.findAll({
       where: {

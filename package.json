@@ -6,7 +6,8 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --setupFiles ./tests/setup.js --runInBand --detectOpenHandles",
     "start": "node index.js",
-    "dev": "cross-env NODE_ENV=development nodemon index.js"
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "prod": "cross-env NODE_ENV=production node index.js"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +27,7 @@
     "multer": "^2.1.0",
     "mysql2": "^3.16.0",
     "node-sql-parser": "^5.4.0",
-    "openai": "^4.x.x",
+    "openai": "^4.104.0",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "pino": "^10.3.1",

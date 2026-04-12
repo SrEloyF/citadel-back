@@ -23,10 +23,14 @@ async function createAgentAndUser(userPayload) {
 
   const xsrfCookie = loginRes.headers['set-cookie']
     .find(c => c.startsWith('XSRF-TOKEN='));
-  const xsrfToken = decodeURIComponent(
-    xsrfCookie.split(';')[0].split('=')[1]
-  );
-  agent.set('X-XSRF-TOKEN', xsrfToken);
+  
+  if (xsrfCookie) {
+    const xsrfTokenValue = decodeURIComponent(
+      xsrfCookie.split(';')[0].split('=')[1]
+    );
+    const xsrfToken = xsrfTokenValue.split('.')[0];
+    agent.set('X-XSRF-TOKEN', xsrfToken);
+  }
 
   return {
     agent,

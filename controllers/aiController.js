@@ -1,15 +1,19 @@
 const { processAiRequest } = require('../services/aiService');
 const logger = require('./../utils/logger');
+const MAX_PROMPT_LENGTH = 200;
 
 const getAdminAiResponse = async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: "Falta el prompt." });
-  logger.info(`Prompt recibido (Admin): ${prompt}`);
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    return res.status(400).json({ error: "Prompt demasiado largo." });
+  }
+  logger.debug(`Prompt recibido (Admin): ${prompt}`);
 
   try {
     const result = await processAiRequest(prompt, true);
-    logger.info('Respuesta final (Admin):');
-    logger.info(result);
+    logger.debug('Respuesta final (Admin):');
+    logger.debug(result);
     let final = result;
     if (typeof final === 'string') {
       final = final
@@ -33,12 +37,15 @@ const getAdminAiResponse = async (req, res) => {
 const getPublicAiResponse = async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: "Falta el prompt." });
-  logger.info(`Prompt recibido (Public): ${prompt}`);
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    return res.status(400).json({ error: "Prompt demasiado largo." });
+  }
+  logger.debug(`Prompt recibido (Public): ${prompt}`);
 
   try {
     const result = await processAiRequest(prompt, false);
-    logger.info('Respuesta final (Public):');
-    logger.info(result);
+    logger.debug('Respuesta final (Public):');
+    logger.debug(result);
     const cleanedResult = typeof result === 'string'
       ? result.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
       : result;

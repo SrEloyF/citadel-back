@@ -1,13 +1,14 @@
 const path = require('path');
 const fs = require('fs');
 const { createAdminAgent } = require('../utils/adminAgentHelper');
-const { createSaborPresentacion } = require('../utils/createVinos');
+const { createProductRelations } = require('../utils/createVinos');
 const { Vino, ImagenAdicionalVino, sequelize } = require('../../models');
 const storageService = require('../../services/storageService');
 
 describe('Crud imágenes adicionales de vinos (R2)', () => {
   let agent;
   let sabor;
+  let dulzor;
   let presentacion;
   let vinoId;
   const timeout = 120000;
@@ -18,8 +19,9 @@ describe('Crud imágenes adicionales de vinos (R2)', () => {
     const admin = await createAdminAgent();
     agent = admin.agent;
 
-    const rel = await createSaborPresentacion();
+    const rel = await createProductRelations();
     sabor = rel.sabor;
+    dulzor = rel.dulzor;
     presentacion = rel.presentacion;
 
     const imgPath = path.join(__dirname, '../fixtures/img.jpg');
@@ -27,11 +29,12 @@ describe('Crud imágenes adicionales de vinos (R2)', () => {
 
     const vinoRes = await agent
       .post('/admin/vinos')
+      .field('sku', 'SKU-ADD-1')
       .field('id_sabor', sabor.id_sabor)
+      .field('id_dulzor', dulzor.id_dulzor)
       .field('id_presentacion', presentacion.id_presentacion)
       .field('nombre', 'vino test imagenes adicionales')
       .field('descripcion', 'desc')
-      .field('volumen_ml', '750')
       .field('stock', '10')
       .attach('url_img_principal', imgPath);
 
@@ -40,6 +43,9 @@ describe('Crud imágenes adicionales de vinos (R2)', () => {
 
   afterAll(async () => {
     await sequelize.close();
+    if (storageService.s3?.destroy) {
+      storageService.s3.destroy();
+    }
   });
 
   test('Crear imagen adicional de vino', async () => {

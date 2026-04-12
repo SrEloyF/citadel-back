@@ -4,9 +4,8 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Precio extends Model {
     static associate(models) {
-      this.belongsTo(models.Vino, {
-        foreignKey: 'id_vino'
-      });
+      this.belongsTo(models.Vino, { foreignKey: 'id_vino' });
+      this.hasMany(models.CarritoProducto, { foreignKey: 'id_precio' });
     }
   }
 
@@ -23,16 +22,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         validate: {
           isInt: { msg: 'El id_vino debe ser un entero' }
-        }
-      },
-      tipo_venta: {
-        type: DataTypes.ENUM('my', 'mn'),
-        allowNull: false,
-        validate: {
-          isIn: {
-            args: [['my', 'mn']],
-            msg: "El tipo_venta solo puede ser 'my' o 'mn'"
-          }
         }
       },
       cantidad_minima: {

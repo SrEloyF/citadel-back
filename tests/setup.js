@@ -1,1 +1,7 @@
-require('dotenv').config({ path: '.env.test' });
+const dotenv = require('dotenv');
+dotenv.config({ path: '.env', quiet: true});
+dotenv.config({
+  path: '.env.test',
+  override: true,
+  quiet: true
+});

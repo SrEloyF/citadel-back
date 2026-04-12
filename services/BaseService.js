@@ -9,15 +9,14 @@ class BaseService {
     this.models = models;
   }
 
-  sanitize(data) {
+  sanitize(data, fields = null) {
+    const allowed = fields || this.allowedFields;
     const sanitized = {};
-
-    for (const key of this.allowedFields) {
+    for (const key of allowed) {
       if (data[key] !== undefined) {
         sanitized[key] = data[key];
       }
     }
-
     return sanitized;
   }
 

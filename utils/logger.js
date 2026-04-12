@@ -1,10 +1,10 @@
 const pino = require('pino');
 
-const isDev = process.env.NODE_ENV === 'development';
+const prettyEnvs = ['development', 'test'];
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
-  ...(isDev && {
+  ...(prettyEnvs.includes(process.env.NODE_ENV) && {
     transport: {
       target: 'pino-pretty',
       options: {

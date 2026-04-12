@@ -31,11 +31,7 @@ const register = async (req, res) => {
     res.status(201).json(usuario);
   } catch (err) {
     logger.error({ err }, 'Error al registrar usuario');
-    res.status(400).json({
-      error: err.message,
-      msg: err.name || undefined,
-      original: err.original?.sqlMessage || undefined
-    });
+    res.status(400).json({ error: "Error al registar usuario" });
   }
 };
 
@@ -85,9 +81,7 @@ const login = async (req, res) => {
 
   } catch (err) {
     logger.error({ err }, 'Error al iniciar sesión');
-    return res.status(500).json({
-      error: `Error interno del servidor: ${err}`
-    });
+    return res.status(500).json({ error: `Error interno del servidor`});
   }
 };
 

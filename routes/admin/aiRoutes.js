@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 
 const aiLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
-  max: Number(process.env.AI_ADMIN_RATE_LIMIT),
+  max: Number(process.env.AI_ADMIN_RATE_LIMIT) || 50,
   message: "Has alcanzado el límite de consultas diarias. Intenta nuevamente mañana.",
 });
 

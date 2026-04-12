@@ -1,15 +1,16 @@
 const express = require('express');
 
-function generateCrudRoutes(controller) {
+function generateCrudRoutes(controller, options = {}) {
   const router = express.Router();
+  const exclude = options.exclude || [];
 
-  router.get('/', controller.findAll);
-  router.get('/:id', controller.findById);
-  router.post('/', controller.create);
-  router.post('/buscar', controller.findByField);
-  router.put('/:id', controller.update);
-  router.patch('/:id', controller.updateFields);
-  router.delete('/:id', controller.delete);
+  if (!exclude.includes('findAll')) router.get('/', controller.findAll);
+  if (!exclude.includes('findById')) router.get('/:id', controller.findById);
+  if (!exclude.includes('create')) router.post('/', controller.create);
+  if (!exclude.includes('findByField')) router.post('/buscar', controller.findByField);
+  if (!exclude.includes('update')) router.put('/:id', controller.update);
+  if (!exclude.includes('updateFields')) router.patch('/:id', controller.updateFields);
+  if (!exclude.includes('delete')) router.delete('/:id', controller.delete);
 
   return router;
 }

@@ -108,7 +108,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     scopes: {
       withPassword: { attributes: {} },
-      withRefreshToken: { attributes: { include: ['refresh_token'] } }
+      withRefreshToken: { attributes: { include: ['refresh_token'], exclude: ['hash_contrasena'] } }
     },
   });
 
