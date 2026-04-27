@@ -61,4 +61,14 @@ async function testConnection(pool, name) {
   }
 }
 
-module.exports = { adminPool, publicPool, dbType, initPools };
+function getAdminPool() {
+  if (!adminPool) throw new Error('adminPool no inicializado');
+  return adminPool;
+}
+
+function getPublicPool() {
+  if (!publicPool) throw new Error('publicPool no inicializado');
+  return publicPool;
+}
+
+module.exports = { getAdminPool, getPublicPool, dbType, initPools };

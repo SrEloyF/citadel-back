@@ -52,8 +52,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     hash_contrasena: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: { notEmpty: true }
+      allowNull: true,
+    },
+    google_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     telefono: {
       type: DataTypes.STRING(50),
