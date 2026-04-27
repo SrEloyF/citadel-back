@@ -1,5 +1,5 @@
 const { openai, adminSystemPrompt, publicSystemPrompt } = require('../config/ai');
-const { adminPool, publicPool, dbType } = require('../config/bdAi');
+const { getAdminPool, getPublicPool, dbType } = require('../config/bdAi');
 const { sanitizeSqlQuery } = require('../utils/sqlSanitizer');
 const logger = require('./../utils/logger');
 const tiktoken = require('tiktoken');
@@ -9,7 +9,7 @@ const enc = tiktoken.get_encoding("cl100k_base");
 async function executeSql(query, isAdmin) {
   try {
     const safeQuery = sanitizeSqlQuery(query, isAdmin);
-    const pool = isAdmin ? adminPool : publicPool;
+    const pool = isAdmin ? getAdminPool() : getPublicPool();
 
     logger.debug(`-> Ejecutando SQL (${isAdmin ? 'Admin' : 'Public'}): ${safeQuery}`);
 

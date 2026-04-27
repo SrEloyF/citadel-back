@@ -60,29 +60,50 @@ const login = async (req, res) => {
       });
     }
 
-    const rawCsrfToken = generateCsrfToken();
-    const signedCsrfToken = `${rawCsrfToken}.${signToken(rawCsrfToken)}`;
-
-    res.cookie(
-      'refreshToken',
-      tokens.refreshToken,
-      refreshCookieOptions
-    );
-
-    res.cookie(
-      'XSRF-TOKEN',
-      signedCsrfToken,
-      csrfCookieOptions
-    );
-
-    return res.json({
-      accessToken: tokens.accessToken
-    });
+    return _sendAuthResponse(res, tokens);
 
   } catch (err) {
     logger.error({ err }, 'Error al iniciar sesión');
     return res.status(500).json({ error: `Error interno del servidor`});
   }
+};
+
+const googleLogin = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ error: 'idToken es requerido' });
+    }
+
+    const tokens = await authService.googleLogin(idToken);
+
+    return _sendAuthResponse(res, tokens);
+  } catch (err) {
+    logger.error({ err }, 'Error en Google Login');
+    return res.status(401).json({ error: 'Autenticación de Google fallida' });
+  }
+};
+
+const _sendAuthResponse = (res, tokens) => {
+  const rawCsrfToken = generateCsrfToken();
+  const signedCsrfToken = `${rawCsrfToken}.${signToken(rawCsrfToken)}`;
+
+  res.cookie(
+    'refreshToken',
+    tokens.refreshToken,
+    refreshCookieOptions
+  );
+
+  res.cookie(
+    'XSRF-TOKEN',
+    signedCsrfToken,
+    csrfCookieOptions
+  );
+
+  return res.json({
+    accessToken: tokens.accessToken
+  });
 };
 
 const refresh = async (req, res) => {
@@ -133,4 +154,4 @@ const logout = async (req, res) => {
   res.status(204).end();
 };
 
-module.exports = { register, login, refresh, logout };
+module.exports = { register, login, googleLogin, refresh, logout };
