@@ -79,6 +79,9 @@ class BaseController {
       res.status(204).send();
     } catch (err) {
       logger.error({ err }, 'Error al eliminar registro');
+      if (err.name === 'BadRequestError' || err.message.includes('No se puede eliminar')) {
+        return res.status(400).json({ error: err.message });
+      }
       res.status(500).json({ error: 'Error al eliminar registro' });
     }
   };
@@ -156,7 +159,7 @@ class BaseController {
 
     } catch (err) {
       logger.error({ err }, 'Error al consultar registro del usuario por ID');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al consultar registro del usuario por ID' });
@@ -172,7 +175,7 @@ class BaseController {
       return res.status(201).json(result);
     } catch (err) {
       logger.error({ err }, 'Error al crear registro del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al crear registro del usuario' });
@@ -191,7 +194,7 @@ class BaseController {
       return res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al buscar por campo en registros del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       return res.status(500).json({ error: 'Error al buscar por campo en registros del usuario' });
     }
@@ -205,7 +208,7 @@ class BaseController {
       return res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al actualizar registro del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al actualizar registro del usuario' });
@@ -222,7 +225,7 @@ class BaseController {
       res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al actualizar campos del registro del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al actualizar campos del registro del usuario' });

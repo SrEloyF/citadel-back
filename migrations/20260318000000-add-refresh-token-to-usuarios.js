@@ -1,8 +1,8 @@
 'use strict';
-/** @type {import('sequelize-cli').Migration} */
+const { safeRemoveColumn, safeAddColumn } = require('../utils/safe-update-column');
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('usuarios', 'refresh_token', {
+    await safeAddColumn(queryInterface, 'usuarios', 'refresh_token', {
       type: Sequelize.TEXT,
       allowNull: true,
     });

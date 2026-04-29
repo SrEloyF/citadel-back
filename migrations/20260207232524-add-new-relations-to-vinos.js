@@ -1,8 +1,8 @@
 'use strict';
-
+const { safeRemoveColumn, safeAddColumn } = require('../utils/safe-update-column');
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('vinos', 'id_sabor', {
+    await safeAddColumn(queryInterface, 'vinos', 'id_sabor', {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
@@ -13,7 +13,7 @@ module.exports = {
       onDelete: 'RESTRICT',
     });
 
-    await queryInterface.addColumn('vinos', 'id_presentacion', {
+    await safeAddColumn(queryInterface, 'vinos', 'id_presentacion', {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
@@ -24,7 +24,7 @@ module.exports = {
       onDelete: 'RESTRICT',
     });
 
-    await queryInterface.removeColumn('vinos', 'precio');
+    await safeRemoveColumn(queryInterface, 'vinos', 'precio');
 
     if (queryInterface.sequelize.options.dialect === 'postgres') {
       await queryInterface.sequelize.transaction(async (t) => {
@@ -61,12 +61,6 @@ module.exports = {
         defaultValue: 'D',
       });
     }
-
-    await queryInterface.addConstraint('vinos', {
-      fields: ['id_sabor', 'id_presentacion', 'volumen_ml'],
-      type: 'unique',
-      name: 'unique_sabor_presentacion_volumen'
-    });
   },
 
   async down(queryInterface, Sequelize) {
