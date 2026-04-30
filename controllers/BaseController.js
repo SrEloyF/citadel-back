@@ -12,7 +12,27 @@ class BaseController {
       res.status(201).json(result);
     } catch (err) {
       logger.error({ err }, 'Error al crear registro');
-      res.status(400).json({ error: "Error al crear registro" });
+      if (err.name === 'SequelizeUniqueConstraintError' || err?.original?.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({
+          type: 'BUSINESS_ERROR',
+          code: 'DUPLICATE_VALUE',
+          message: 'El registro ya existe'
+        });
+      }
+
+      if (err.name === 'SequelizeValidationError') {
+        return res.status(422).json({
+          type: 'BUSINESS_ERROR',
+          code: 'VALIDATION_ERROR',
+          message: 'Datos inválidos'
+        });
+      }
+
+      return res.status(500).json({
+        type: 'SYSTEM_ERROR',
+        code: 'INTERNAL_ERROR',
+        message: 'Ha ocurrido un error inesperado'
+      });
     }
   };
 
@@ -105,7 +125,7 @@ class BaseController {
   updateFields = async (req, res) => {
     const fields = req.body;
     try {
-      const result =  await this.service.updateFields(req.params.id, fields, req.file || null);
+      const result = await this.service.updateFields(req.params.id, fields, req.file || null);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
@@ -230,7 +250,7 @@ class BaseController {
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al actualizar campos del registro del usuario' });
     }
-  };  
+  };
 
   deleteMine = async (req, res) => {
     try {
@@ -238,7 +258,7 @@ class BaseController {
       const { id } = req.params;
       const success = await this.service.deleteMine(id, userId);
       if (success) return res.status(204).send();
-      return res.status(500).json({ error: 'No se pudo eliminar'});
+      return res.status(500).json({ error: 'No se pudo eliminar' });
     } catch (err) {
       logger.error({ err }, 'Error al eliminar registro del usuario');
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
