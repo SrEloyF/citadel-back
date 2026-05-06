@@ -10,4 +10,7 @@ router.put('/:id', controller.updateMine);
 router.patch('/:id', controller.updateAllMineFields);
 router.delete('/:id', controller.deleteMine);
 
+router.post('/agregar', controller.addOrUpdateProduct);
+router.get('/carrito/:id_carrito', controller.findCartProducts);
+
 module.exports = router;
