@@ -267,6 +267,41 @@ class BaseController {
     }
   };
 
+  addOrUpdateProduct = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id_carrito, id_vino, cantidad } = req.body;
+
+      if (!id_carrito || !id_vino || cantidad === undefined || cantidad === 0) {
+        return res.status(400).json({ error: 'Faltan datos o cantidad inválida' });
+      }
+
+      const result = await this.service.addOrUpdateProduct(
+        id_carrito,
+        id_vino,
+        cantidad,
+        userId
+      );
+
+      return res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message || 'Error al agregar producto' });
+    }
+  };
+
+  findCartProducts = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id_carrito } = req.params;
+
+      const result = await this.service.findCartProductsByCarrito(id_carrito, userId);
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error al obtener carrito' });
+    }
+  };
 }
 
 module.exports = BaseController;

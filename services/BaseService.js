@@ -492,6 +492,100 @@ class BaseService {
     throw new Error('Configuración de ownership inválida');
   }
 
+
+  async addOrUpdateProduct(id_carrito, id_vino, cantidad, userId) {
+   
+    const precios = await this.models.Precio.findAll({
+      where: { id_vino },
+      order: [['cantidad_minima', 'DESC']]
+    });
+
+    if (!precios.length) {
+      throw new Error('No hay precios definidos para este vino');
+    }
+
+    const getPrecio = (cantidadEval) => {
+      return (
+        precios
+          .filter(p => (cantidadEval) > p.cantidad_minima) 
+          .sort((a, b) => b.cantidad_minima - a.cantidad_minima)[0]
+        ||
+        precios.find(p => p.cantidad_minima === 1)
+      );
+    };
+
+    const precioAplicable = getPrecio(cantidad);
+
+    if (!precioAplicable) {
+      throw new Error('No se encontró un precio válido para esta cantidad');
+    }
+
+    const nuevoPrecioId = precioAplicable.id_precio;
+    const nuevoPrecioVenta = parseFloat(precioAplicable.precio);
+
+    const existing = await this.model.findOne({
+      where: { id_carrito },
+      include: [{
+        model: this.models.Precio,
+        where: { id_vino },
+        required: true
+      }]
+    });
+
+    if (existing) {
+      const nuevaCantidad = existing.cantidad + cantidad;
+
+      if (nuevaCantidad <= 0) {
+        await existing.destroy();
+        return { eliminado: true };
+      }
+
+      const precioAplicable = getPrecio(nuevaCantidad);
+
+      return await existing.update({
+        cantidad: nuevaCantidad,
+        id_precio: precioAplicable.id_precio,
+        precio_venta: parseFloat(precioAplicable.precio)
+      });
+    }
+
+    return await this.model.create({
+      id_carrito,
+      id_precio: nuevoPrecioId,
+      cantidad,
+      precio_venta: nuevoPrecioVenta
+    });
+  }
+
+  async findCartProductsByCarrito(id_carrito, userId) {
+    return await this.model.findAll({
+      where: { id_carrito },
+      include: [
+        {
+          model: this.models.Carrito,
+          where: { id_usuario: userId },
+          required: true
+        },
+        {
+          model: this.models.Precio,
+          include: [
+            {
+              model: this.models.Vino,
+              include: [
+                {
+                  model: this.models.Presentacion
+                },
+                {
+                  model: this.models.Precio
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+  }
+
 }
 
 module.exports = BaseService;
