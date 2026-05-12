@@ -10,6 +10,7 @@ class CarritoProductoService extends BaseService {
       'id_carrito',
       'id_precio',
       'cantidad',
+      'precio_venta'
     ];
     this.allowedUpdateFields = [
       'cantidad'

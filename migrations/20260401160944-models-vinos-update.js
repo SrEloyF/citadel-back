@@ -1,5 +1,5 @@
 'use strict';
-const { safeRemoveColumn, safeAddColumn } = require('../utils/safe-update-column');
+const { safeRemoveColumn, safeAddColumn, safeRemoveIndex, safeAddIndex } = require('../utils/safe-update-column');
 
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -73,19 +73,21 @@ module.exports = {
 
     await safeRemoveColumn(queryInterface, 'vinos', 'volumen_ml');
 
-    await queryInterface.addIndex('vinos', ['id_sabor']);
-    await queryInterface.addIndex('vinos', ['id_presentacion']);
+    await safeAddIndex(queryInterface, 'vinos', ['id_sabor']);
+    await safeAddIndex(queryInterface, 'vinos', ['id_presentacion']);
 
-    await queryInterface.removeIndex('vinos', 'unique_sabor_presentacion_volumen');
+    await safeRemoveIndex(queryInterface, 'vinos', 'unique_sabor_presentacion_volumen');
 
-    await queryInterface.addIndex('vinos', ['id_sabor', 'id_dulzor', 'id_presentacion'], {
-      unique: true,
-      name: 'unique_sabor_dulzor_presentacion'
-    });
+    await safeAddIndex(queryInterface, 'vinos', ['id_sabor', 'id_dulzor', 'id_presentacion'],
+      {
+        unique: true,
+        name: 'unique_sabor_dulzor_presentacion'
+      }
+    );
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeIndex('vinos', 'unique_sabor_dulzor_presentacion');
+    await safeRemoveIndex(queryInterface, 'vinos', 'unique_sabor_dulzor_presentacion');
 
     await safeAddColumn(queryInterface, 'vinos', 'volumen_ml', {
       type: Sequelize.INTEGER,

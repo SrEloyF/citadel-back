@@ -102,7 +102,8 @@ const _sendAuthResponse = (res, tokens) => {
   );
 
   return res.json({
-    accessToken: tokens.accessToken
+    accessToken: tokens.accessToken,
+    csrfToken: rawCsrfToken
   });
 };
 
@@ -133,7 +134,8 @@ const refresh = async (req, res) => {
     );
 
     res.json({
-      accessToken
+      accessToken,
+      csrfToken: rawCsrfToken
     });
 
   } catch (err) {

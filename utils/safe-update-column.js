@@ -42,7 +42,58 @@ async function safeAddColumn(queryInterface, tableName, columnName, attributes) 
   }
 }
 
+async function safeAddIndex(queryInterface, tableName, fields, options = {}) {
+  try {
+    const indexes = await queryInterface.showIndex(tableName);
+
+    const indexExists = indexes.some((idx) => {
+      const idxFields = (idx.fields || []).map(f => f.attribute);
+      const targetFields = Array.isArray(fields) ? fields : [fields];
+
+      return (
+        idxFields.length === targetFields.length &&
+        idxFields.every((f, i) => f === targetFields[i])
+      );
+    });
+
+    if (!indexExists) {
+      await queryInterface.addIndex(tableName, fields, options);
+    }
+  } catch (err) {
+    logger.error({ err }, `Error al añadir índice en ${tableName}`);
+    throw err;
+  }
+}
+
+async function safeRemoveIndex(queryInterface, tableName, indexName) {
+  try {
+    await queryInterface.removeIndex(tableName, indexName);
+  } catch (err) {
+    const msg = (err.message || '').toLowerCase();
+    const origMsg = err.original?.message ? err.original.message.toLowerCase() : '';
+    const parentMsg = err.parent?.message ? err.parent.message.toLowerCase() : '';
+
+    const isIndexMissing =
+      msg.includes('does not exist') ||
+      msg.includes('not exist') ||
+      msg.includes('unknown index') ||
+      origMsg.includes('does not exist') ||
+      parentMsg.includes('does not exist') ||
+      err.parent?.code === '42704' ||
+      err.parent?.errno === 1091;
+
+    if (isIndexMissing) {
+      return;
+    }
+
+    logger.error({ err }, `Error al eliminar índice ${indexName} de ${tableName}`);
+    throw err;
+  }
+}
+
 module.exports = {
   safeRemoveColumn,
   safeAddColumn,
+  safeAddIndex,
+  safeRemoveIndex,
 };

@@ -12,7 +12,27 @@ class BaseController {
       res.status(201).json(result);
     } catch (err) {
       logger.error({ err }, 'Error al crear registro');
-      res.status(400).json({ error: "Error al crear registro" });
+      if (err.name === 'SequelizeUniqueConstraintError' || err?.original?.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({
+          type: 'BUSINESS_ERROR',
+          code: 'DUPLICATE_VALUE',
+          message: 'El registro ya existe'
+        });
+      }
+
+      if (err.name === 'SequelizeValidationError') {
+        return res.status(422).json({
+          type: 'BUSINESS_ERROR',
+          code: 'VALIDATION_ERROR',
+          message: 'Datos inválidos'
+        });
+      }
+
+      return res.status(500).json({
+        type: 'SYSTEM_ERROR',
+        code: 'INTERNAL_ERROR',
+        message: 'Ha ocurrido un error inesperado'
+      });
     }
   };
 
@@ -79,6 +99,9 @@ class BaseController {
       res.status(204).send();
     } catch (err) {
       logger.error({ err }, 'Error al eliminar registro');
+      if (err.name === 'BadRequestError' || err.message.includes('No se puede eliminar')) {
+        return res.status(400).json({ error: err.message });
+      }
       res.status(500).json({ error: 'Error al eliminar registro' });
     }
   };
@@ -102,7 +125,7 @@ class BaseController {
   updateFields = async (req, res) => {
     const fields = req.body;
     try {
-      const result =  await this.service.updateFields(req.params.id, fields, req.file || null);
+      const result = await this.service.updateFields(req.params.id, fields, req.file || null);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
@@ -156,7 +179,7 @@ class BaseController {
 
     } catch (err) {
       logger.error({ err }, 'Error al consultar registro del usuario por ID');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al consultar registro del usuario por ID' });
@@ -172,7 +195,7 @@ class BaseController {
       return res.status(201).json(result);
     } catch (err) {
       logger.error({ err }, 'Error al crear registro del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al crear registro del usuario' });
@@ -191,7 +214,7 @@ class BaseController {
       return res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al buscar por campo en registros del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       return res.status(500).json({ error: 'Error al buscar por campo en registros del usuario' });
     }
@@ -205,7 +228,7 @@ class BaseController {
       return res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al actualizar registro del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al actualizar registro del usuario' });
@@ -222,12 +245,12 @@ class BaseController {
       res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al actualizar campos del registro del usuario');
-      if (err.name === 'BadRequestError') return res.status(400).json({ error: 'Solicitud inválida' });
+      if (err.name === 'BadRequestError') return res.status(400).json({ error: err.message });
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
       if (err.name === 'NotFoundError') return res.status(404).json({ error: 'Registro no encontrado' });
       return res.status(500).json({ error: 'Error al actualizar campos del registro del usuario' });
     }
-  };  
+  };
 
   deleteMine = async (req, res) => {
     try {
@@ -235,7 +258,7 @@ class BaseController {
       const { id } = req.params;
       const success = await this.service.deleteMine(id, userId);
       if (success) return res.status(204).send();
-      return res.status(500).json({ error: 'No se pudo eliminar'});
+      return res.status(500).json({ error: 'No se pudo eliminar' });
     } catch (err) {
       logger.error({ err }, 'Error al eliminar registro del usuario');
       if (err.name === 'OwnershipError') return res.status(403).json({ error: 'Error de pertenencia' });
@@ -244,6 +267,41 @@ class BaseController {
     }
   };
 
+  addOrUpdateProduct = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id_carrito, id_vino, cantidad } = req.body;
+
+      if (!id_carrito || !id_vino || cantidad === undefined || cantidad === 0) {
+        return res.status(400).json({ error: 'Faltan datos o cantidad inválida' });
+      }
+
+      const result = await this.service.addOrUpdateProduct(
+        id_carrito,
+        id_vino,
+        cantidad,
+        userId
+      );
+
+      return res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message || 'Error al agregar producto' });
+    }
+  };
+
+  findCartProducts = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id_carrito } = req.params;
+
+      const result = await this.service.findCartProductsByCarrito(id_carrito, userId);
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error al obtener carrito' });
+    }
+  };
 }
 
 module.exports = BaseController;

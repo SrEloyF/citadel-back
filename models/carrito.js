@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class Carrito extends Model {
     static associate(models) {
       this.belongsTo(models.Usuario, { foreignKey: 'id_usuario' });
+      this.belongsTo(models.Cupon, { foreignKey: 'id_cupon', as: 'cupon' });
       this.hasMany(models.CarritoProducto, { foreignKey: 'id_carrito' });
       this.hasOne(models.Pago, { foreignKey: 'id_pedido', as: 'pago' });
     }
@@ -19,6 +20,10 @@ module.exports = (sequelize, DataTypes) => {
     id_usuario: {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    id_cupon: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
     estado: {
       type: DataTypes.ENUM('V', 'E'),

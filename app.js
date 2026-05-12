@@ -46,6 +46,8 @@ app.use('/public/vinos', require('./routes/public/vinoPublicRoutes'));
 app.use('/public/imagenesadicionalesvinos', require('./routes/public/imagenAdicionalVinoPublicRoutes'));
 app.use('/public/banners', require('./routes/public/bannerPublicRoutes'));
 app.use('/public/ai', require('./routes/public/aiRoutes'));
+app.use('/public/reclamos', require('./routes/public/reclamoRoutes'));
+app.use('/public/cupones', require('./routes/public/cuponPublicRoutes'));
 
 // Rutas para usuarios autenticados
 app.use('/me/carritos', authMiddleware, verifyCsrf, require('./routes/authenticated-users/carritoRoutes'));
@@ -66,6 +68,8 @@ app.use('/admin/pagos', authMiddleware, authorizeRoles('A'), verifyCsrf, require
 app.use('/admin/usuarios', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/usuarioRoutes'));
 app.use('/admin/banners', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/bannerRoutes'));
 app.use('/admin/ai', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/aiRoutes'));
+app.use('/admin/cupones', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/cuponRoutes'));
+app.use('/admin/reclamos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/reclamoRoutes'));
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
