@@ -1,6 +1,7 @@
 const OwnershipError = require('../validators/ownershipError');
 const NotFoundError = require('../validators/notFoundError');
 const BadRequestError = require('../validators/badRequestError');
+const storageService = require('./storageService');
 
 class BaseService {
   constructor(model, ownershipConfig = null, models = {}) {
@@ -269,9 +270,14 @@ class BaseService {
     return await this.model.findAll(query);
   }
 
-  async updateMine(id, data, userId) {
+  async updateMine(id, data, userId, file = null) {
     if (!this.ownershipConfig) {
       throw new Error('Ownership no definido para este modelo');
+    }
+
+    if (file) {
+      const uploadedUrl = await storageService.upload(file, 'carpeta');
+      data.url_img = uploadedUrl;
     }
 
     const cfg = this.ownershipConfig;
@@ -306,12 +312,15 @@ class BaseService {
       }
 
       const exists = await this.model.findByPk(id);
+
       if (!exists) throw new NotFoundError();
+
       throw new OwnershipError();
     }
 
     if (cfg.type === 'join') {
       const ownershipQuery = this.buildOwnershipQuery(userId);
+
       const instance = await this.model.findOne({
         where: { [pkField]: id, ...(ownershipQuery.where || {}) },
         ...(ownershipQuery.include ? { include: ownershipQuery.include } : {}),
@@ -324,6 +333,7 @@ class BaseService {
           sanitized[cfg.create.foreignKey] !== undefined
         ) {
           const relatedModel = this.models[cfg.include.model];
+
           const newRelatedId = sanitized[cfg.create.foreignKey];
 
           const related = await relatedModel.findOne({
@@ -347,20 +357,28 @@ class BaseService {
         }
 
         await instance.update(sanitized);
+
         return instance;
       }
 
       const exists = await this.model.findByPk(id);
+
       if (!exists) throw new NotFoundError();
+
       throw new OwnershipError();
     }
 
     throw new Error('Configuración de ownership inválida');
   }
 
-  async updateAllMineFields(id, fields, userId) {
+  async updateAllMineFields(id, fields, userId, file = null) {
     if (!this.ownershipConfig) {
       throw new Error('Ownership no definido para este modelo');
+    }
+
+    if (file) {
+      const uploadedUrl = await storageService.upload(file, 'carpeta');
+      fields.url_img = uploadedUrl;
     }
 
     const cfg = this.ownershipConfig;
@@ -395,7 +413,9 @@ class BaseService {
       }
 
       const exists = await this.model.findByPk(id);
+
       if (!exists) throw new NotFoundError();
+
       throw new OwnershipError();
     }
 
@@ -414,6 +434,7 @@ class BaseService {
           sanitized[cfg.create.foreignKey] !== undefined
         ) {
           const relatedModel = this.models[cfg.include.model];
+
           const newRelatedId = sanitized[cfg.create.foreignKey];
 
           const related = await relatedModel.findOne({
@@ -437,17 +458,20 @@ class BaseService {
         }
 
         await instance.update(sanitized);
+
         return instance;
       }
 
       const exists = await this.model.findByPk(id);
+
       if (!exists) throw new NotFoundError();
+
       throw new OwnershipError();
     }
 
     throw new Error('Configuración de ownership inválida');
   }
-
+  
   async deleteMine(id, userId) {
     if (!this.ownershipConfig) {
       throw new Error('Ownership no definido para este modelo');

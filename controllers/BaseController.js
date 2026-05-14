@@ -224,7 +224,7 @@ class BaseController {
     try {
       const userId = req.user.id;
       const { id } = req.params;
-      const result = await this.service.updateMine(id, req.body, userId);
+      const result = await this.service.updateMine(id, req.body, userId, req.file || null);
       return res.json(result);
     } catch (err) {
       logger.error({ err }, 'Error al actualizar registro del usuario');
@@ -240,7 +240,7 @@ class BaseController {
       const userId = req.user.id;
       const { id } = req.params;
       const fields = req.body;
-      const result = await this.service.updateAllMineFields(id, fields, userId);
+      const result = await this.service.updateAllMineFields(id, req.body, userId, req.file || null);
       if (!result) return res.status(404).json({ error: 'No encontrado' });
       res.json(result);
     } catch (err) {
