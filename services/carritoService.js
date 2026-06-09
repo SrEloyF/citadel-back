@@ -10,11 +10,13 @@ class CarritoService extends BaseService {
     this.allowedFields = [
       'id_usuario',
       'estado',
-      'id_cupon'
+      'id_cupon',
+      'tipo',
     ];
     this.allowedUpdateFields = [
       'estado',
-      'id_cupon'
+      'id_cupon',
+      'tipo',
     ];
   }
 

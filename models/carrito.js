@@ -43,6 +43,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
+    tipo: {
+      type: DataTypes.ENUM('D', 'T'),
+      allowNull: false,
+      defaultValue: 'D'
+    },
     updated_at: {
       type: DataTypes.DATE,
       allowNull: false,

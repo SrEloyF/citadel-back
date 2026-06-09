@@ -85,6 +85,16 @@ describe('Flow logged-user (ownership & self)', () => {
 
   });
 
+  test('GET /me/usuario/perfil - obtener mi perfil (objeto directo)', async () => {
+    const res = await agent.get('/me/usuario/perfil').expect(200);
+
+    expect(Array.isArray(res.body)).toBe(false);
+    expect(res.body).toHaveProperty('id_usuario');
+    expect(res.body.id_usuario).toBe(user.id_usuario);
+    expect(res.body).not.toHaveProperty('hash_contrasena');
+    expect(res.body).not.toHaveProperty('refresh_token');
+  });
+
   test('PUT /me/usuario/:id - actualizar mi perfil', async () => {
     const payload = {
         nombres: 'LoggedChanged'

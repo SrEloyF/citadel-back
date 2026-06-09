@@ -180,13 +180,21 @@ class VinoService extends BaseService {
       await vino.update(cleanData, { transaction: t });
 
       if (data.precios !== undefined && Array.isArray(data.precios)) {
-        await Precio.destroy({ where: { id_vino: id }, transaction: t });
+        const existingPrecios = await Precio.findAll({ where: { id_vino: id }, transaction: t });
+        const existingIds = existingPrecios.map(p => p.id_precio);
+        const incomingIds = data.precios.filter(p => p.id_precio).map(p => p.id_precio);
+
+        const toDelete = existingIds.filter(id => !incomingIds.includes(id));
+        if (toDelete.length > 0) {
+          await Precio.destroy({ where: { id_precio: toDelete }, transaction: t });
+        }
 
         for (const p of data.precios) {
-          await Precio.create(
-            { ...p, id_vino: id },
-            { transaction: t }
-          );
+          if (p.id_precio && existingIds.includes(p.id_precio)) {
+            await Precio.update(p, { where: { id_precio: p.id_precio }, transaction: t });
+          } else {
+            await Precio.create({ ...p, id_vino: id }, { transaction: t });
+          }
         }
       }
 
@@ -216,9 +224,7 @@ class VinoService extends BaseService {
 
         if (bodyImages.length === 0) {
           const allUrls = oldImages.map(img => img.url_img);
-
           await this._deleteUnusedImages(allUrls);
-
           await ImagenAdicionalVino.destroy({
             where: { id_vino: id },
             transaction: t
@@ -231,18 +237,22 @@ class VinoService extends BaseService {
               : `${process.env.R2_PUBLIC_URL}/${img.url_img}`
           );
 
-          const imagesToDelete = oldImages
-            .filter(img => !bodyUrls.includes(img.url_img))
-            .map(img => img.url_img);
+          const oldUrls = oldImages.map(img => img.url_img);
+          const urlsToDelete = oldUrls.filter(url => !bodyUrls.includes(url));
+          const urlsToAdd = bodyUrls.filter(url => !oldUrls.includes(url));
 
-          await this._deleteUnusedImages(imagesToDelete);
+          if (urlsToDelete.length > 0) {
+            await this._deleteUnusedImages(urlsToDelete);
+            await ImagenAdicionalVino.destroy({
+              where: {
+                id_vino: id,
+                url_img: urlsToDelete
+              },
+              transaction: t
+            });
+          }
 
-          await ImagenAdicionalVino.destroy({
-            where: { id_vino: id },
-            transaction: t
-          });
-
-          for (const url of bodyUrls) {
+          for (const url of urlsToAdd) {
             await ImagenAdicionalVino.create(
               { url_img: url, id_vino: id },
               { transaction: t }
