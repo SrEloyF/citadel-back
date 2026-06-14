@@ -132,7 +132,7 @@ describe('Flow logged-user (ownership & self)', () => {
   });
 
   test('PATCH /me/carritos/:id - puedo editar parcialmente mi carrito', async () => {
-    const payload = { estado: 'V' };
+    const payload = { estado: 'C' };
 
     const res = await agent
       .patch(`/me/carritos/${myCarrito.id_carrito}`)
@@ -143,7 +143,7 @@ describe('Flow logged-user (ownership & self)', () => {
     }
 
     expect(res.status).toBe(200);
-    expect(res.body.estado).toBe('V');
+    expect(res.body.estado).toBe('C');
     expect(res.body.id_carrito).toBe(myCarrito.id_carrito);
   });
 

@@ -72,6 +72,8 @@ app.use('/admin/ai', authMiddleware, authorizeRoles('A'), verifyCsrf, require('.
 app.use('/admin/cupones', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/cuponRoutes'));
 app.use('/admin/reclamos', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/reclamoRoutes'));
 
+app.use('/test', require('./routes/testRoutes'))
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });

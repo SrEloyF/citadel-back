@@ -77,7 +77,7 @@ describe('Flow carritos', () => {
     const carrito = list.body[0];
 
     const updatePayload = {
-      estado: 'V',
+      estado: 'C',
     };
 
     const res = await agent
@@ -90,7 +90,7 @@ describe('Flow carritos', () => {
       console.error('BODY:', res.body);
     }
 
-    expect(res.body.estado).toBe('V');
+    expect(res.body.estado).toBe('C');
   });
 
   test('PATCH /me/carritos/:id - actualizar parcialmente mi carrito', async () => {
@@ -100,7 +100,7 @@ describe('Flow carritos', () => {
 
     const id = createRes.body.id_carrito;
     const patchPayload = {
-      estado: 'V'
+      estado: 'C'
     };
 
     const patchRes = await agent
@@ -108,7 +108,7 @@ describe('Flow carritos', () => {
       .send(patchPayload)
       .expect(200);
 
-    expect(patchRes.body.estado).toBe('V');
+    expect(patchRes.body.estado).toBe('C');
     expect(patchRes.body.id_carrito).toBe(id);
     expect(patchRes.body.id_usuario).toBe(user.id_usuario);
   });

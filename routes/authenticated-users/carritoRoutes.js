@@ -4,6 +4,7 @@ const controller = require('../../controllers/carritoController');
 
 router.get('/', controller.findAllMine);
 router.get('/:id', controller.findMineById);
+router.get('/:id/historial', controller.findHistorialMine);
 router.post('/', controller.createMine);
 router.post('/buscar', controller.findAllMineByField);
 router.put('/:id', controller.updateMine);

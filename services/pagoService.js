@@ -96,7 +96,7 @@ class PagoService extends BaseService {
 
       // Actualizar estado del carrito
       await carrito.update({
-        estado: 'V',
+        estado: 'P',
         fecha_compra: new Date()
       }, { transaction });
 

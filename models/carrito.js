@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       this.belongsTo(models.Cupon, { foreignKey: 'id_cupon', as: 'cupon' });
       this.hasMany(models.CarritoProducto, { foreignKey: 'id_carrito' });
       this.hasOne(models.Pago, { foreignKey: 'id_pedido', as: 'pago' });
+      this.hasMany(models.PedidoEstadoHistorial, { foreignKey: 'id_carrito', as: 'historialEstados' });
     }
   }
 
@@ -26,7 +27,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     estado: {
-      type: DataTypes.ENUM('V', 'E'),
+      type: DataTypes.ENUM(
+        'E', // En Espera
+        'P', // Pagado
+        'R', // Revisado
+        'A', // Alistado
+        'S', // Enviado o listo para recoger
+        'C', // Completado
+      ),
       allowNull: false,
       defaultValue: 'E'
     },
@@ -59,7 +67,27 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'carritos',
     timestamps: true,
     createdAt: 'fecha_creacion',
-    updatedAt: 'updated_at'
+    updatedAt: 'updated_at',
+    hooks: {
+      afterCreate: async (carrito, options) => {
+        const { PedidoEstadoHistorial } = sequelize.models;
+        await PedidoEstadoHistorial.create({
+          id_carrito: carrito.id_carrito,
+          estado: carrito.estado,
+          fecha: new Date()
+        }, { transaction: options.transaction });
+      },
+      afterUpdate: async (carrito, options) => {
+        if (carrito.changed('estado')) {
+          const { PedidoEstadoHistorial } = sequelize.models;
+          await PedidoEstadoHistorial.create({
+            id_carrito: carrito.id_carrito,
+            estado: carrito.estado,
+            fecha: new Date()
+          }, { transaction: options.transaction });
+        }
+      }
+    }
   });
 
   return Carrito;

@@ -55,6 +55,16 @@ class CarritoService extends BaseService {
       }
     }
   }
+
+  async findHistorialMine(id, userId) {
+    const carrito = await this.findMineById(id, userId);
+    if (!carrito) return null;
+
+    return await this.models.PedidoEstadoHistorial.findAll({
+      where: { id_carrito: id },
+      order: [['fecha', 'DESC']]
+    });
+  }
 }
 
 module.exports = new CarritoService();
