@@ -15,19 +15,21 @@ const adminSchema = `
     usuarios(id_usuario PK, tipo[A=admin|U=usuario], nombres, apellidos, dni, email*, telefono, direccion, ciudad, fecha_creacion)
     carritos(id_carrito PK, id_usuario FK->usuarios, estado[E=espera|V=vendido], fecha_pedido, fecha_compra, fecha_creacion)
     carritos_productos(id_carrito_producto PK, id_carrito FK->carritos, id_vino FK->vinos, cantidad, precio_venta)
-    vinos(id_vino PK, nombre, descripcion, volumen_ml, stock, estado[D=disponible|A=agotado|P=pronto], url_img_principal, id_sabor FK->sabores, id_presentacion FK->presentaciones, UNIQUE(id_sabor,id_presentacion,volumen_ml))
-    precios(id_precio PK, id_vino FK->vinos, tipo_venta[my=mayorista|mn=minorista], cantidad_minima, precio)
+    vinos(id_vino PK, nombre, descripcion, stock, estado[D=disponible|A=agotado|P=pronto], url_img_principal, id_sabor FK->sabores, id_presentacion FK->presentaciones, id_dulzor FK->dulzores, UNIQUE(id_sabor,id_presentacion,id_dulzor))
+    precios(id_precio PK, id_vino FK->vinos, cantidad_minima, precio)
     pagos(id_pago PK, id_pedido FK->carritos UNIQUE, metodo[E=efectivo|T=tarjeta], monto, estado, fecha_creacion)
     imagenes_adicionales_vinos(id_imagen PK, id_vino FK->vinos, url_img)
-    sabores(id_sabor PK, nombre, descripcion)
-    presentaciones(id_presentacion PK, nombre)
+    sabores(id_sabor PK, nombre)
+    presentaciones(id_presentacion PK, volumen_ml, botellas_por_caja)
+    dulzores(id_dulzor PK, nombre)
 `;
 
 const publicSchema = `
-    vinos(id_vino PK, nombre, descripcion, volumen_ml, stock, estado[D=disponible|A=agotado|P=pronto], url_img_principal, id_sabor FK->sabores, id_presentacion FK->presentaciones, UNIQUE(id_sabor,id_presentacion,volumen_ml))
-    precios(id_precio PK, id_vino FK->vinos, tipo_venta[my=mayorista|mn=minorista], cantidad_minima, precio)
-    sabores(id_sabor PK, nombre, descripcion)
-    presentaciones(id_presentacion PK, nombre)
+    vinos(id_vino PK, nombre, descripcion, stock, estado[D=disponible|A=agotado|P=pronto], id_sabor FK->sabores, id_presentacion FK->presentaciones, id_dulzor FK->dulzores, UNIQUE(id_sabor,id_presentacion,id_dulzor))
+    precios(id_precio PK, id_vino FK->vinos, cantidad_minima, precio)
+    sabores(id_sabor PK, nombre)
+    presentaciones(id_presentacion PK, volumen_ml, botellas_por_caja)
+    dulzores(id_dulzor PK, nombre)
 `;
 
 const systemPromptAdmin = (schema) => `

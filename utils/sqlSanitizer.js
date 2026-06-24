@@ -6,11 +6,11 @@ const sqlDialect = dbType === "mysql" ? "mysql" : "postgresql";
 
 const ADMIN_WHITE_LIST = new Set([
   'banners', 'usuarios', 'carritos', 'carritos_productos', 'vinos',
-  'precios', 'pagos', 'imagenes_adicionales_vinos', 'sabores', 'presentaciones'
+  'precios', 'pagos', 'imagenes_adicionales_vinos', 'sabores', 'presentaciones', 'dulzores'
 ]);
 
 const PUBLIC_WHITE_LIST = new Set([
-  'vinos', 'precios', 'sabores', 'presentaciones'
+  'vinos', 'precios', 'sabores', 'presentaciones', 'dulzores'
 ]);
 
 function checkFunctionsAndTables(node, whitelist) {
