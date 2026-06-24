@@ -9,7 +9,7 @@ const enc = tiktoken.get_encoding("cl100k_base");
 async function executeSql(query, isAdmin) {
   try {
     const safeQuery = sanitizeSqlQuery(query, isAdmin);
-    const pool = isAdmin ? getAdminPool() : getPublicPool();
+    const pool = isAdmin ? await getAdminPool() : await getPublicPool();
 
     logger.debug(`-> Ejecutando SQL (${isAdmin ? 'Admin' : 'Public'}): ${safeQuery}`);
 

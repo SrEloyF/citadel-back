@@ -34,22 +34,29 @@ function createPool(user, password) {
 
 let adminPool;
 let publicPool;
+let initPromise = null;
 
 async function initPools() {
-  try {
-    adminPool = createPool(process.env.DB_IA_ADMIN_USERNAME, process.env.DB_IA_ADMIN_PASSWORD);
-    publicPool = createPool(process.env.DB_IA_PUBLIC_USERNAME, process.env.DB_IA_PUBLIC_PASSWORD);
+  if (!initPromise) {
+    initPromise = (async () => {
+      try {
+        adminPool = createPool(process.env.DB_IA_ADMIN_USERNAME, process.env.DB_IA_ADMIN_PASSWORD);
+        publicPool = createPool(process.env.DB_IA_PUBLIC_USERNAME, process.env.DB_IA_PUBLIC_PASSWORD);
 
-    if (process.env.NODE_ENV !== 'test') {
-      await testConnection(adminPool, 'Admin');
-      await testConnection(publicPool, 'Public');
-    }
+        if (process.env.NODE_ENV !== 'test') {
+          await testConnection(adminPool, 'Admin');
+          await testConnection(publicPool, 'Public');
+        }
 
-    return { adminPool, publicPool };
-  } catch (err) {
-    logger.error({ err }, `Error al crear los pools`);
-    throw err;
+        return { adminPool, publicPool };
+      } catch (err) {
+        initPromise = null;
+        logger.error({ err }, `Error al crear los pools`);
+        throw err;
+      }
+    })();
   }
+  await initPromise;
 }
 
 async function testConnection(pool, name) {
@@ -61,13 +68,13 @@ async function testConnection(pool, name) {
   }
 }
 
-function getAdminPool() {
-  if (!adminPool) throw new Error('adminPool no inicializado');
+async function getAdminPool() {
+  if (!adminPool) await initPools();
   return adminPool;
 }
 
-function getPublicPool() {
-  if (!publicPool) throw new Error('publicPool no inicializado');
+async function getPublicPool() {
+  if (!publicPool) await initPools();
   return publicPool;
 }
 
