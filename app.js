@@ -34,6 +34,9 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
+app.get("/favicon.ico", (req, res) => { res.status(204).end();});
+app.get("/favicon.png", (req, res) => { res.status(204).end();});
+
 // Rutas para autenticación
 app.use('/auth', require('./routes/authRoutes'));
 
