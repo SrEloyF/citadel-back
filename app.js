@@ -60,6 +60,7 @@ app.use('/me/usuario', authMiddleware, verifyCsrf, require('./routes/authenticat
 app.use('/me/culqi', authMiddleware, verifyCsrf, require('./routes/authenticated-users/culqiRoutes'));
 
 // Rutas para ADMIN
+app.use('/admin/estadisticas', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/estadisticaRoutes'));
 app.use('/admin/presentaciones', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/presentacionRoutes'));
 app.use('/admin/sabores', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/saborRoutes'));
 app.use('/admin/dulzores', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/dulzorRoutes'));
