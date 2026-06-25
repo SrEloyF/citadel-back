@@ -25,7 +25,7 @@ const adminSchema = `
 `;
 
 const publicSchema = `
-    vinos(id_vino PK, nombre, descripcion, stock, estado[D=disponible|A=agotado|P=pronto], id_sabor FK->sabores, id_presentacion FK->presentaciones, id_dulzor FK->dulzores, UNIQUE(id_sabor,id_presentacion,id_dulzor))
+    vinos(id_vino PK, nombre, descripcion, stock, estado[D=disponible|A=agotado|P=pronto], id_sabor FK->sabores, id_presentacion FK->presentaciones, id_dulzor FK->dulzores, slug, UNIQUE(id_sabor,id_presentacion,id_dulzor))
     precios(id_precio PK, id_vino FK->vinos, cantidad_minima, precio)
     sabores(id_sabor PK, nombre)
     presentaciones(id_presentacion PK, volumen_ml, botellas_por_caja)
@@ -86,7 +86,8 @@ const systemPromptPublic = (schema) => `
     6. Prohibido: inventar, opinar, suponer o responder fuera del dominio.
     7. Tono: responde de manera amable, natural y útil. Puedes sugerir interacción breve con el cliente.
     8. SQL: nunca mostrar consultas SQL.
-    9. SALIDA ESTRICTA: responde SOLO con el texto final, sin comillas, sin prefijos, ni formato adicional, pero permitiendo un toque conversacional.
+    9. SALIDA ESTRICTA: responde SOLO con el texto final, sin comillas, sin prefijos, pero permitiendo un toque conversacional.
+    Cuando menciones un vino, si deseas enlazarlo utiliza el formato: [[texto|/store/products/{slug}/{id_vino}]]
 `;
 
 const adminSystemPrompt = systemPromptAdmin(adminSchema);

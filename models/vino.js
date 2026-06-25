@@ -1,6 +1,15 @@
 'use strict';
 const { Model } = require('sequelize');
 
+function generarSlug(texto) {
+  return texto
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+}
+
 module.exports = (sequelize, DataTypes) => {
   class Vino extends Model {
     static associate(models) {
@@ -64,6 +73,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
+    slug: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
   }, {
     sequelize,
     modelName: 'Vino',
@@ -72,12 +85,23 @@ module.exports = (sequelize, DataTypes) => {
     createdAt: 'fecha_creacion',
     updatedAt: false,
     indexes: [
-    {
-      unique: true,
-      fields: ['id_sabor', 'id_dulzor', 'id_presentacion'],
-      name: 'unique_sabor_dulzor_presentacion'
+      {
+        unique: true,
+        fields: ['id_sabor', 'id_dulzor', 'id_presentacion'],
+        name: 'unique_sabor_dulzor_presentacion'
+      }
+    ],
+    hooks: {
+      beforeCreate(vino) {
+        vino.slug = generarSlug(vino.nombre);
+      },
+
+      beforeUpdate(vino) {
+        if (vino.changed('nombre')) {
+          vino.slug = generarSlug(vino.nombre);
+        }
+      }
     }
-  ]
   });
 
   return Vino;
