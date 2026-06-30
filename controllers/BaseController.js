@@ -1,5 +1,5 @@
 const validarCamposModelo = require('../validators/modelValidator');
-const logger = require('./../utils/logger');
+const logger = require('../utils/logger');
 
 class BaseController {
   constructor(service) {

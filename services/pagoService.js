@@ -20,44 +20,77 @@ class PagoService extends BaseService {
 
   async getCartTotal(userId) {
     const carrito = await this.models.Carrito.findOne({
-      where: { id_usuario: userId, estado: 'E' },
+      where: {
+        estado: 'E'
+      },
       include: [
-        { model: this.models.CarritoProducto },
-        { model: this.models.Cupon, as: 'cupon' }
+        {
+          model: this.models.Direccion,
+          as: 'direccion',
+          required: true,
+          where: {
+            id_usuario: userId
+          }
+        },
+        {
+          model: this.models.CarritoProducto
+        },
+        {
+          model: this.models.Cupon,
+          as: 'cupon'
+        }
       ]
     });
 
-    if (!carrito || !carrito.CarritoProductos || carrito.CarritoProductos.length === 0) {
-      throw new BadRequestError('No hay un carrito activo con productos.');
+    if (
+      !carrito ||
+      !carrito.CarritoProductos ||
+      carrito.CarritoProductos.length === 0
+    ) {
+      throw new BadRequestError(
+        'No hay un carrito activo con productos.'
+      );
     }
 
-    let subtotal = 0;
-    carrito.CarritoProductos.forEach(item => {
-      subtotal += parseFloat(item.precio_venta) * item.cantidad;
-    });
+    const subtotal = carrito.CarritoProductos.reduce(
+      (sum, item) =>
+        sum + (parseFloat(item.precio_venta) * item.cantidad),
+      0
+    );
 
-    let total = subtotal;
     let descuentoAplicado = 0;
 
     if (carrito.cupon) {
-      const { tipo_descuento, descuento } = carrito.cupon;
+      const {
+        tipo_descuento,
+        descuento
+      } = carrito.cupon;
+
       if (tipo_descuento === 'F') {
         descuentoAplicado = parseFloat(descuento);
-      } else if (tipo_descuento === 'P') {
-        descuentoAplicado = subtotal * (parseFloat(descuento) / 100);
       }
-      total -= descuentoAplicado;
+
+      if (tipo_descuento === 'P') {
+        descuentoAplicado =
+          subtotal * (parseFloat(descuento) / 100);
+      }
     }
 
-    if (total < 0) total = 0;
+    const envio =
+      carrito.tipo === 'D'
+        ? 20
+        : 0;
 
-    const envio = carrito.tipo === 'D' ? 20 : 0;
-    total += envio;
+    const total = Math.max(
+      0,
+      subtotal - descuentoAplicado + envio
+    );
 
     return {
       subtotal,
       descuento: descuentoAplicado,
       total,
+      envio,
       id_carrito: carrito.id_carrito,
       id_cupon: carrito.id_cupon,
       items_count: carrito.CarritoProductos.length
@@ -94,13 +127,11 @@ class PagoService extends BaseService {
     try {
       const carrito = await this.models.Carrito.findByPk(id_carrito);
 
-      // Actualizar estado del carrito
       await carrito.update({
         estado: 'P',
         fecha_compra: new Date()
       }, { transaction });
 
-      // Crear registro de pago
       const pago = await this.models.Pago.create({
         id_pedido: id_carrito,
         metodo: 'T',

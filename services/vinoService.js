@@ -18,7 +18,8 @@ class VinoService extends BaseService {
       'descripcion',
       'stock',
       'url_img_principal',
-      'estado'
+      'estado',
+      'slug',
     ];
     this.allowedUpdateFields = [
       'sku',
@@ -29,7 +30,8 @@ class VinoService extends BaseService {
       'descripcion',
       'stock',
       'url_img_principal',
-      'estado'
+      'estado',
+      'slug',
     ];
   }
 

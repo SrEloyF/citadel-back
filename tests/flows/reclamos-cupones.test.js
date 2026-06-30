@@ -11,7 +11,7 @@ describe('Pruebas para Reclamos y Cupones', () => {
 
   beforeAll(async () => {
     await sequelize.sync({ force: true });
-    
+
     const admin = await createAdminAgent();
     adminAgent = admin.agent;
 
@@ -32,7 +32,7 @@ describe('Pruebas para Reclamos y Cupones', () => {
       email: 'user@test.com',
       contrasena: 'password123'
     });
-    
+
     const accessToken = loginRes.body.accessToken;
     userAgent.set('Authorization', `Bearer ${accessToken}`);
 
@@ -71,10 +71,13 @@ describe('Pruebas para Reclamos y Cupones', () => {
         estado: 'N'
       });
 
+
+
+
       await adminAgent.patch(`/admin/reclamos/${reclamo.id_reclamo}`)
         .send({ estado: 'R' })
         .expect(200);
-      
+
       const updated = await Reclamo.findByPk(reclamo.id_reclamo);
       expect(updated.estado).toBe('R');
 
@@ -129,14 +132,18 @@ describe('Pruebas para Reclamos y Cupones', () => {
     });
 
     test('No se puede eliminar un cupón si ya ha sido usado en un pago', async () => {
-      const carrito = await Carrito.create({
-        id_usuario: testUser.id_usuario,
-        id_cupon: cuponActivo.id_cupon,
-        estado: 'E'
-      });
+      const carritoRes = await userAgent
+        .post('/me/carritos')
+        .send({
+          id_usuario: testUser.id_usuario,
+          id_cupon: cuponActivo.id_cupon,
+          estado: 'E'
+        })
+        .expect(201);
+      const idCarrito = carritoRes.body.id_carrito;
 
       await Pago.create({
-        id_pedido: carrito.id_carrito,
+        id_pedido: idCarrito,
         metodo: 'E',
         monto: 100
       });
@@ -145,15 +152,35 @@ describe('Pruebas para Reclamos y Cupones', () => {
     });
 
     test('Un usuario no puede usar el mismo cupón dos veces en compras pagadas', async () => {
-      const nuevoCarrito = await Carrito.create({
-        id_usuario: testUser.id_usuario,
-        estado: 'E'
+      const primerCarritoRes = await userAgent
+        .post('/me/carritos')
+        .send({
+          id_usuario: testUser.id_usuario,
+          id_cupon: cuponActivo.id_cupon,
+          estado: 'E'
+        })
+        .expect(201);
+
+      await Pago.create({
+        id_pedido: primerCarritoRes.body.id_carrito,
+        metodo: 'E',
+        monto: 100
       });
 
-      const res = await userAgent.patch(`/me/carritos/${nuevoCarrito.id_carrito}`)
+      const segundoCarritoRes = await userAgent
+        .post('/me/carritos')
+        .send({
+          id_usuario: testUser.id_usuario,
+          estado: 'E'
+        })
+        .expect(201);
+
+      const idNuevoCarrito = segundoCarritoRes.body.id_carrito;
+
+      const res = await userAgent.patch(`/me/carritos/${idNuevoCarrito}`)
         .send({ id_cupon: cuponActivo.id_cupon })
         .expect(400);
-      
+
       expect(res.body.error).toContain('ya ha utilizado este cupón');
     });
 
@@ -166,7 +193,7 @@ describe('Pruebas para Reclamos y Cupones', () => {
       const res = await userAgent.patch(`/me/carritos/${carritoPagado.id_carrito}`)
         .send({ id_cupon: null })
         .expect(400);
-      
+
       expect(res.body.error).toContain('No se puede eliminar el cupón de un pedido ya pagado');
     });
   });

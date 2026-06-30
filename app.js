@@ -58,6 +58,7 @@ app.use('/me/carritosproductos', authMiddleware, verifyCsrf, require('./routes/a
 app.use('/me/pagos', authMiddleware, verifyCsrf, require('./routes/authenticated-users/pagoRoutes'));
 app.use('/me/usuario', authMiddleware, verifyCsrf, require('./routes/authenticated-users/usuarioSelfRoutes'));
 app.use('/me/culqi', authMiddleware, verifyCsrf, require('./routes/authenticated-users/culqiRoutes'));
+app.use('/me/direcciones', authMiddleware, verifyCsrf, require('./routes/authenticated-users/direccionRoutes'));
 
 // Rutas para ADMIN
 app.use('/admin/estadisticas', authMiddleware, authorizeRoles('A'), verifyCsrf, require('./routes/admin/estadisticaRoutes'));

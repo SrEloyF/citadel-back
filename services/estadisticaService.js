@@ -1,4 +1,4 @@
-const { Pago, Carrito, CarritoProducto, Vino, Sabor, Usuario, Precio, sequelize } = require('../models');
+const { Pago, Carrito, CarritoProducto, Vino, Sabor, Usuario, Precio, Direccion, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 class EstadisticaService {
@@ -12,7 +12,6 @@ class EstadisticaService {
   async getKPIs(startDate, endDate) {
     const { start, end } = this._parseRange(startDate, endDate);
 
-    // 1. Ventas Totales (Sum of amount from Pago table)
     const totalSalesObj = await Pago.findOne({
       attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'total']],
       where: {
@@ -23,11 +22,11 @@ class EstadisticaService {
     });
     const totalSales = parseFloat(totalSalesObj?.getDataValue('total') || 0);
 
-    // 2. Productos Vendidos (Sum of quantities of CarritoProducto where state is checked/paid/completed)
     const productsSoldObj = await CarritoProducto.findOne({
       attributes: [[sequelize.fn('SUM', sequelize.col('cantidad')), 'total']],
       include: [{
         model: Carrito,
+        as: 'carrito',
         attributes: [],
         required: true,
         where: {
@@ -39,7 +38,6 @@ class EstadisticaService {
     });
     const productsSold = parseInt(productsSoldObj?.total || 0);
 
-    // 3. Total Usuarios (Registered in date range, type 'U')
     const totalUsers = await Usuario.count({
       where: {
         tipo: 'U',
@@ -47,9 +45,25 @@ class EstadisticaService {
       }
     });
 
-    // 4. Usuarios que compraron (Unique clients with orders placed in range)
     const usersPurchasedObj = await Carrito.findOne({
-      attributes: [[sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('id_usuario'))), 'count']],
+      attributes: [
+        [
+          sequelize.fn(
+            'COUNT',
+            sequelize.fn(
+              'DISTINCT',
+              sequelize.col('direccion.id_usuario')
+            )
+          ),
+          'count'
+        ]
+      ],
+      include: [{
+        model: Direccion,
+        as: 'direccion',
+        attributes: [],
+        required: true
+      }],
       where: {
         estado: { [Op.ne]: 'E' },
         fecha_compra: { [Op.between]: [start, end] }
@@ -58,7 +72,6 @@ class EstadisticaService {
     });
     const usersPurchased = parseInt(usersPurchasedObj?.count || 0);
 
-    // 5. Usuarios nuevos (Registered in range, type 'U')
     const newClients = await Usuario.count({
       where: {
         tipo: 'U',
@@ -66,7 +79,6 @@ class EstadisticaService {
       }
     });
 
-    // 6. Costo Promedio (Average payment amount)
     const avgSaleCostObj = await Pago.findOne({
       attributes: [[sequelize.fn('AVG', sequelize.col('monto')), 'average']],
       where: {
@@ -118,6 +130,7 @@ class EstadisticaService {
       include: [
         {
           model: Carrito,
+          as: 'carrito',
           attributes: [],
           required: true,
           where: {
@@ -127,6 +140,7 @@ class EstadisticaService {
         },
         {
           model: Precio,
+          as: 'precio',
           attributes: ['id_vino'],
           required: true,
           include: [{
@@ -136,7 +150,11 @@ class EstadisticaService {
           }]
         }
       ],
-      group: ['Precio.id_vino', 'Precio->Vino.id_vino', 'Precio->Vino.nombre'],
+      group: [
+        'precio.id_vino',
+        'precio->Vino.id_vino',
+        'precio->Vino.nombre'
+      ],
       order: [[sequelize.literal('cantidad_total'), 'DESC']],
       limit: 5,
       raw: true
@@ -180,6 +198,7 @@ class EstadisticaService {
       include: [
         {
           model: Carrito,
+          as: 'carrito',
           attributes: [],
           required: true,
           where: {
@@ -189,6 +208,7 @@ class EstadisticaService {
         },
         {
           model: Precio,
+          as: 'precio',
           attributes: [],
           required: true,
           include: [{
@@ -203,7 +223,7 @@ class EstadisticaService {
           }]
         }
       ],
-      group: ['Precio->Vino->Sabor.id_sabor', 'Precio->Vino->Sabor.nombre'],
+      group: ['precio->Vino->Sabor.id_sabor', 'precio->Vino->Sabor.nombre'],
       order: [[sequelize.literal('cantidad_total'), 'DESC']],
       raw: true
     });
@@ -225,15 +245,16 @@ class EstadisticaService {
         model: Carrito,
         required: true,
         include: [{
-          model: Usuario,
-          attributes: ['ciudad'],
-          required: true
+          model: Direccion,
+          as: 'direccion',
+          required: true,
+          attributes: ['id_departamento', 'id_provincia', 'id_distrito']
         }]
       }],
       where: {
         fecha_creacion: { [Op.between]: [start, end] }
       },
-      group: ['Carrito->Usuario.ciudad'],
+      group: ['Carrito->direccion.id_departamento'],
       order: [[sequelize.literal('total_ventas'), 'DESC']],
       limit: 5,
       raw: true

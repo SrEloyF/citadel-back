@@ -15,8 +15,6 @@ class UsuarioService extends BaseService {
       'email',
       'hash_contrasena',
       'telefono',
-      'direccion',
-      'ciudad'
     ];
     this.allowedUpdateFields = [
       'url_img',
@@ -26,9 +24,18 @@ class UsuarioService extends BaseService {
       'email',
       'hash_contrasena',
       'telefono',
-      'direccion',
-      'ciudad'
     ];
+  }
+
+  async findById(id) {
+    return await this.model.findByPk(id, {
+      include: [
+        {
+          model: this.models.Direccion,
+          as: 'direcciones'
+        }
+      ]
+    });
   }
 
   async validatePassword(email, plainPassword) {

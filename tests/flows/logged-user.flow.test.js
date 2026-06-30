@@ -113,6 +113,28 @@ describe('Flow logged-user (ownership & self)', () => {
     expect(res.body.nombres).toBe('LoggedChanged');
   });
 
+  test('PATCH /me/usuario/:id - actualizar mi perfil', async () => {
+    const payload = {
+      nombres: 'LoggedChanged',
+      dni: '87654321',
+      telefono: '987632541'
+    };
+
+    const res = await agent
+      .patch(`/me/usuario/${user.id_usuario}`)
+      .send(payload);
+
+    if (res.status !== 200) {
+      console.error('STATUS:', res.status);
+      console.error('BODY:', res.body);
+    }
+
+    expect(res.status).toBe(200);
+    expect(res.body.nombres).toBe('LoggedChanged');
+    expect(res.body.dni).toBe('87654321');
+    expect(res.body.telefono).toBe('987632541');
+  });
+
   test('GET /me/carritos/:id - no puedo ver el carrito de otro usuario (403)', async () => {
     await agent.get(`/me/carritos/${otherCarrito.id_carrito}`).expect(403);
   });
@@ -186,7 +208,7 @@ describe('Flow logged-user (ownership & self)', () => {
   });
 
   test('PUT /me/carritos/:id - recurso inexistente devuelve 404', async () => {
-    await agent.put('/me/carritos/999999').send({ estado: 'X' }).expect(404);
+    await agent.put('/me/carritos/999999').send({ estado: 'A' }).expect(404);
   });
 
   test('DELETE /me/carritos/:id - recurso inexistente devuelve 404', async () => {

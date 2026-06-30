@@ -1,7 +1,14 @@
 module.exports = {
   Carrito: {
-    type: 'direct',
-    field: 'id_usuario',
+    type: 'join',
+    include: {
+      model: 'Direccion',
+      as: 'direccion',
+      whereField: 'id_usuario'
+    },
+    create: {
+      foreignKey: 'id_direccion'
+    }
   },
 
   Usuario: {
@@ -24,7 +31,14 @@ module.exports = {
     type: 'join',
     include: {
       model: 'Carrito',
+      as: 'carrito',
       whereField: 'id_usuario',
+      include: [
+        {
+          model: 'Direccion',
+          as: 'direccion'
+        }
+      ]
     },
     create: {
       foreignKey: 'id_carrito'

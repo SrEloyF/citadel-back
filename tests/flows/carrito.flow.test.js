@@ -110,7 +110,7 @@ describe('Flow carritos', () => {
 
     expect(patchRes.body.estado).toBe('C');
     expect(patchRes.body.id_carrito).toBe(id);
-    expect(patchRes.body.id_usuario).toBe(user.id_usuario);
+    expect(patchRes.body.direccion.id_usuario).toBe(user.id_usuario);
   });
 
   test('DELETE /me/carritos/:id - eliminar mi carrito', async () => {

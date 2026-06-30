@@ -4,11 +4,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Carrito extends Model {
     static associate(models) {
-      this.belongsTo(models.Usuario, { foreignKey: 'id_usuario' });
       this.belongsTo(models.Cupon, { foreignKey: 'id_cupon', as: 'cupon' });
       this.hasMany(models.CarritoProducto, { foreignKey: 'id_carrito' });
       this.hasOne(models.Pago, { foreignKey: 'id_pedido', as: 'pago' });
       this.hasMany(models.PedidoEstadoHistorial, { foreignKey: 'id_carrito', as: 'historialEstados' });
+      this.belongsTo(models.Direccion, { foreignKey: 'id_direccion', as: 'direccion' });
     }
   }
 
@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
-    id_usuario: {
+    id_direccion: {
       type: DataTypes.INTEGER,
       allowNull: false
     },

@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   const isTest = process.env.NODE_ENV === 'test';
   class Usuario extends Model {
     static associate(models) {
-      this.hasMany(models.Carrito, { foreignKey: 'id_usuario' });
+      this.hasMany(models.Direccion, { foreignKey: 'id_usuario', as: 'direcciones' });
     }
   }
 
@@ -59,14 +59,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     telefono: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    direccion: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    ciudad: {
       type: DataTypes.STRING(50),
       allowNull: true
     },

@@ -1,5 +1,5 @@
 const BaseService = require('./BaseService');
-const { Cupon, Carrito, Pago } = require('../models');
+const { Cupon, Carrito, Pago, Direccion, Usuario } = require('../models');
 const BadRequestError = require('../validators/badRequestError');
 
 class CuponService extends BaseService {
@@ -71,19 +71,34 @@ class CuponService extends BaseService {
   async validateUsageForUser(cuponId, usuarioId) {
     const alreadyUsed = await Carrito.findOne({
       where: {
-        id_usuario: usuarioId,
         id_cupon: cuponId
       },
-      include: [{
-        model: Pago,
-        as: 'pago',
-        required: true
-      }]
+      include: [
+        {
+          model: Pago,
+          as: 'pago',
+          required: true
+        },
+        {
+          model: Direccion,
+          as: 'direccion',
+          required: true,
+          include: [{
+            model: Usuario,
+            as: 'usuario',
+            where: { id_usuario: usuarioId },
+            required: true
+          }]
+        }
+      ]
     });
 
     if (alreadyUsed) {
-      throw new BadRequestError('El usuario ya ha utilizado este cupón en una compra anterior.');
+      throw new BadRequestError(
+        'El usuario ya ha utilizado este cupón en una compra anterior.'
+      );
     }
+
     return true;
   }
 }

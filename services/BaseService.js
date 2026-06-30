@@ -32,7 +32,7 @@ class BaseService {
     });
   }
 
-  async findAllWithoutPagination() {
+  async findAllWithoutPagination() {    
     return await this.model.findAll();
   }
 
@@ -130,6 +130,7 @@ class BaseService {
           include: [
             {
               model: relatedModel,
+              as: cfg.include.as,
               where: {
                 [cfg.include.whereField]: userId,
               },
@@ -383,20 +384,26 @@ class BaseService {
         throw new OwnershipError('No puedes cambiar el propietario del recurso');
       }
 
-      const [affected] = await this.model.update(sanitized, {
+      const instance = await this.model.findOne({
         where: {
           [pkField]: id,
           [ownerField]: userId
-        },
+        }
       });
 
-      if (affected > 0) {
-        return await this.model.findByPk(id);
+      if (!instance) {
+        const exists = await this.model.findByPk(id);
+
+        if (!exists) {
+          throw new NotFoundError();
+        }
+
+        throw new OwnershipError();
       }
 
-      const exists = await this.model.findByPk(id);
-      if (!exists) throw new NotFoundError();
-      throw new OwnershipError();
+      await instance.update(sanitized);
+
+      return instance;
     }
 
     if (cfg.type === 'join') {
@@ -494,7 +501,7 @@ class BaseService {
 
 
   async addOrUpdateProduct(id_carrito, id_vino, cantidad, userId) {
-   
+
     const precios = await this.models.Precio.findAll({
       where: { id_vino },
       order: [['cantidad_minima', 'DESC']]
@@ -507,7 +514,7 @@ class BaseService {
     const getPrecio = (cantidadEval) => {
       return (
         precios
-          .filter(p => (cantidadEval) > p.cantidad_minima) 
+          .filter(p => (cantidadEval) > p.cantidad_minima)
           .sort((a, b) => b.cantidad_minima - a.cantidad_minima)[0]
         ||
         precios.find(p => p.cantidad_minima === 1)
@@ -527,6 +534,7 @@ class BaseService {
       where: { id_carrito },
       include: [{
         model: this.models.Precio,
+        as: 'precio',
         where: { id_vino },
         required: true
       }]
@@ -559,15 +567,28 @@ class BaseService {
 
   async findCartProductsByCarrito(id_carrito, userId) {
     return await this.model.findAll({
-      where: { id_carrito },
+      where: {
+        id_carrito
+      },
       include: [
         {
           model: this.models.Carrito,
-          where: { id_usuario: userId },
-          required: true
+          as: 'carrito',
+          required: true,
+          include: [
+            {
+              model: this.models.Direccion,
+               as: 'direccion',
+              required: true,
+              where: {
+                id_usuario: userId
+              }
+            }
+          ]
         },
         {
           model: this.models.Precio,
+          as: 'precio',
           include: [
             {
               model: this.models.Vino,

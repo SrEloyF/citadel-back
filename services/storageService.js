@@ -46,6 +46,7 @@ class StorageService {
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype || 'application/octet-stream',
+      CacheControl: 'public, max-age=2592000, immutable',
       ACL: 'public-read'
     };
 

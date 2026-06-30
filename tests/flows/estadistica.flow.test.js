@@ -40,7 +40,6 @@ describe('Estadisticas Admin Panel Flow', () => {
     expect(res.status).toBe(200);
     expect(res.body).toBeDefined();
     
-    // Default structure validation
     expect(res.body).toHaveProperty('kpi');
     expect(res.body).toHaveProperty('ventasMensuales');
     expect(res.body).toHaveProperty('topProductos');
@@ -49,7 +48,6 @@ describe('Estadisticas Admin Panel Flow', () => {
     expect(res.body).toHaveProperty('ciudadesVentas');
     expect(res.body).toHaveProperty('productosBajoStock');
 
-    // KPI values structure
     expect(res.body.kpi).toHaveProperty('totalSales');
     expect(res.body.kpi).toHaveProperty('productsSold');
     expect(res.body.kpi).toHaveProperty('totalUsers');

@@ -39,7 +39,6 @@ class EstadisticaController {
         return res.json({ data });
       }
 
-      // If no specific metric is requested, fetch everything in parallel
       const [
         kpi,
         ventasMensuales,

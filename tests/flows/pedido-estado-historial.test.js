@@ -55,7 +55,6 @@ describe('Pedido Estado Historial Flow', () => {
   });
 
   test('Should automatically add history entry when admin updates status to P', async () => {
-    // Admin updates status to 'P' (Pagado)
     const updateRes = await adminAgent
       .patch(`/admin/carritos/${carritoId}`)
       .send({
@@ -65,7 +64,6 @@ describe('Pedido Estado Historial Flow', () => {
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.estado).toBe('P');
 
-    // Verify history for user
     const historialRes = await userAgent
       .get(`/me/carritos/${carritoId}/historial`);
 
@@ -75,7 +73,6 @@ describe('Pedido Estado Historial Flow', () => {
   });
 
   test('Should add another history entry when admin updates status to R', async () => {
-    // Admin updates status to 'R' (Revisado)
     const updateRes = await adminAgent
       .patch(`/admin/carritos/${carritoId}`)
       .send({
@@ -85,7 +82,6 @@ describe('Pedido Estado Historial Flow', () => {
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.estado).toBe('R');
 
-    // Verify history
     const historialRes = await userAgent
       .get(`/me/carritos/${carritoId}/historial`);
 
@@ -95,7 +91,6 @@ describe('Pedido Estado Historial Flow', () => {
   });
 
   test('Should not add history entry if status does not change', async () => {
-    // Admin updates something else, e.g., tipo
     const updateRes = await adminAgent
       .patch(`/admin/carritos/${carritoId}`)
       .send({
@@ -104,7 +99,6 @@ describe('Pedido Estado Historial Flow', () => {
 
     expect(updateRes.status).toBe(200);
 
-    // Verify history length remains 3
     const historialRes = await userAgent
       .get(`/me/carritos/${carritoId}/historial`);
 
