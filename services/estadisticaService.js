@@ -100,23 +100,30 @@ class EstadisticaService {
   async getVentasMensuales(startDate, endDate) {
     const { start, end } = this._parseRange(startDate, endDate);
 
+    const dialect = sequelize.getDialect();
+
+    const monthExpression =
+      dialect === 'postgres'
+        ? `TO_CHAR("fecha_compra", 'YYYY-MM')`
+        : `DATE_FORMAT(fecha_compra, '%Y-%m')`;
+
     const result = await Carrito.findAll({
       attributes: [
-        [sequelize.fn('DATE_FORMAT', sequelize.col('fecha_compra'), '%Y-%m'), 'mes'],
+        [sequelize.literal(monthExpression), 'mes'],
         [sequelize.fn('COUNT', sequelize.col('id_carrito')), 'total']
       ],
       where: {
         estado: { [Op.ne]: 'E' },
         fecha_compra: { [Op.between]: [start, end] }
       },
-      group: [sequelize.literal("DATE_FORMAT(fecha_compra, '%Y-%m')")],
+      group: [sequelize.literal(monthExpression)],
       order: [[sequelize.literal('mes'), 'ASC']],
       raw: true
     });
 
     return result.map(row => ({
       mes: row.mes,
-      total: parseInt(row.total || 0)
+      total: Number(row.total) || 0
     }));
   }
 
@@ -239,16 +246,18 @@ class EstadisticaService {
 
     const result = await Pago.findAll({
       attributes: [
+        [sequelize.col('Carrito->direccion.id_departamento'), 'ciudad_departamento'],
         [sequelize.fn('SUM', sequelize.col('monto')), 'total_ventas']
       ],
       include: [{
         model: Carrito,
         required: true,
+        attributes: [],
         include: [{
           model: Direccion,
           as: 'direccion',
           required: true,
-          attributes: ['id_departamento', 'id_provincia', 'id_distrito']
+          attributes: [] 
         }]
       }],
       where: {
@@ -261,7 +270,7 @@ class EstadisticaService {
     });
 
     return result.map(row => ({
-      ciudad: row['Carrito.Usuario.ciudad'] || 'Sin ciudad',
+      ciudad: row.ciudad_departamento || 'Sin ciudad',
       total: parseFloat(row.total_ventas || 0)
     }));
   }

@@ -56,7 +56,7 @@ async function processAiRequest(prompt, isAdmin = false) {
     }
   }];
 
-  const modelo = process.env.MODEL_NAME || "nvidia/nemotron-3-super-120b-a12b:free";
+  const modelo = process.env.MODEL_NAME || "nvidia/nemotron-3-ultra-550b-a55b:free";
   let response = await openai.chat.completions.create({
     model: modelo,
     messages: messages,
@@ -66,7 +66,7 @@ async function processAiRequest(prompt, isAdmin = false) {
     max_tokens: parseInt(process.env.MAX_TOKENS) || 1024,
   });
 
-  let responseMessage = response.choices[0].message;
+  let responseMessage = validateAiResponse(response);
   let iteraciones = 0;
 
   while ((responseMessage.tool_calls || responseMessage.function_call) && iteraciones < 5) {
@@ -99,11 +99,41 @@ async function processAiRequest(prompt, isAdmin = false) {
       tool_choice: "auto",
       max_tokens: parseInt(process.env.MAX_TOKENS) || 1024,
     });
-    responseMessage = nextResponse.choices[0].message;
+    logger.info({ nextResponse }, "Respuesta del modelo");
+    responseMessage = validateAiResponse(nextResponse);
     iteraciones++;
   }
 
   return responseMessage.content;
+}
+
+function validateAiResponse(response) {
+  if (!response?.choices?.length) {
+    throw new Error("AI_PROVIDER_INVALID_RESPONSE");
+  }
+
+  const choice = response.choices[0];
+
+  if (!choice.message) {
+    throw new Error("AI_PROVIDER_INVALID_RESPONSE");
+  }
+
+  const content = choice.message.content ?? "";
+
+  const unkCount = (content.match(/<unk>/g) || []).length;
+
+  if (unkCount > 10) {
+    throw new Error("AI_PROVIDER_CORRUPTED_RESPONSE");
+  }
+
+  if (
+    choice.finish_reason === "length" &&
+    unkCount > 0
+  ) {
+    throw new Error("AI_PROVIDER_TRUNCATED_RESPONSE");
+  }
+
+  return choice.message;
 }
 
 module.exports = { processAiRequest };
