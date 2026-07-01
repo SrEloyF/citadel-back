@@ -1,10 +1,10 @@
 const { createAgentAndUser, resetDatabase } = require('../utils/testHelpers');
-const { Direccion, Carrito, sequelize } = require('../../models');
+const { Direccion, Carrito } = require('../../models');
 
 describe('Flujo de Direcciones y Soft Delete', () => {
   let agent;
   let user;
-  
+
   beforeAll(async () => {
     await resetDatabase();
     const result = await createAgentAndUser({
@@ -28,6 +28,7 @@ describe('Flujo de Direcciones y Soft Delete', () => {
     expect(res.body).toHaveProperty('id_direccion');
     expect(res.body.calle).toBe('Av. Siempre Viva');
     expect(res.body.principal).toBe(true);
+    expect(res.body.activo).toBe(true);
   });
 
   it('Debe obtener todas las direcciones del usuario', async () => {
@@ -44,6 +45,27 @@ describe('Flujo de Direcciones y Soft Delete', () => {
     expect(res.body.calle).toBe('Av. Siempre Viva');
   });
 
+  it('Caso 1: Edición sin historial - Debe modificar la dirección directamente (sin clonar)', async () => {
+    const resDir = await agent.get('/me/direcciones/principal');
+    const direccionOriginal = resDir.body;
+
+    await Carrito.create({
+      id_direccion: direccionOriginal.id_direccion,
+      estado: 'E'
+    });
+
+    const resEdit = await agent.put(`/me/direcciones/${direccionOriginal.id_direccion}`).send({
+      calle: 'Av. Siempre Viva Editada',
+      numero: '742'
+    });
+
+    expect(resEdit.status).toBe(200);
+    const direccionEditada = resEdit.body;
+
+    expect(direccionEditada.id_direccion).toBe(direccionOriginal.id_direccion);
+    expect(direccionEditada.calle).toBe('Av. Siempre Viva Editada');
+  });
+
   it('Debe cambiar la dirección principal si se crea otra explícitamente como principal', async () => {
     const res = await agent.post('/me/direcciones').send({
       calle: 'Calle Falsa',
@@ -54,21 +76,23 @@ describe('Flujo de Direcciones y Soft Delete', () => {
     expect(res.status).toBe(201);
     expect(res.body.principal).toBe(true);
 
-    const direcciones = await Direccion.findAll({ where: { id_usuario: user.id_usuario }, order: [['id_direccion', 'ASC']] });
+    const direcciones = await Direccion.findAll({
+      where: { id_usuario: user.id_usuario, activo: true },
+      order: [['id_direccion', 'ASC']]
+    });
+
     expect(direcciones.length).toBe(2);
     expect(direcciones[0].principal).toBe(false);
     expect(direcciones[1].principal).toBe(true);
   });
 
-  it('Soft Delete (Edición): Modificar una dirección debe crear una nueva y preservar la antigua para historial de pedidos', async () => {
+  it('Caso 2: Edición con historial - Debe clonar la dirección y ocultar la antigua para preservar recibos', async () => {
     const resDir = await agent.get('/me/direcciones/principal');
     const direccionA = resDir.body;
-    expect(direccionA.calle).toBe('Calle Falsa');
 
     const carrito = await Carrito.create({
-      id_usuario: user.id_usuario,
       id_direccion: direccionA.id_direccion,
-      estado: 'E'
+      estado: 'P'
     });
 
     const resEdit = await agent.put(`/me/direcciones/${direccionA.id_direccion}`).send({
@@ -82,15 +106,36 @@ describe('Flujo de Direcciones y Soft Delete', () => {
     expect(nuevaDireccionB.id_direccion).not.toBe(direccionA.id_direccion);
     expect(nuevaDireccionB.calle).toBe('Calle Verdadera');
     expect(nuevaDireccionB.principal).toBe(true);
+    expect(nuevaDireccionB.activo).toBe(true);
 
     const dirAntiguaBD = await Direccion.findByPk(direccionA.id_direccion);
     expect(dirAntiguaBD.principal).toBe(false);
+    expect(dirAntiguaBD.activo).toBe(false);
     expect(dirAntiguaBD.calle).toBe('Calle Falsa');
 
     const carritoBD = await Carrito.findByPk(carrito.id_carrito);
     expect(carritoBD.id_direccion).toBe(direccionA.id_direccion);
-    
-    const direccionDelPedido = await Direccion.findByPk(carritoBD.id_direccion);
-    expect(direccionDelPedido.calle).toBe('Calle Falsa');
+  });
+
+  it('Caso 3: Eliminación manual - Debe ocultar la dirección (activo = false)', async () => {
+    const direcciones = await agent.get('/me/direcciones');
+    const direccionAEliminar = direcciones.body.find(d => !d.principal);
+
+    const res = await agent.delete(`/me/direcciones/${direccionAEliminar.id_direccion}`);
+    expect(res.status).toBe(200);
+
+    const dirBD = await Direccion.findByPk(direccionAEliminar.id_direccion);
+    expect(dirBD.activo).toBe(false);
+    expect(dirBD.principal).toBe(false);
+  });
+
+  it('Caso 4: Listado - Solo debe mostrar las direcciones que el usuario no ha eliminado/editado', async () => {
+    const res = await agent.get('/me/direcciones');
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(1);
+    expect(res.body[0].calle).toBe('Calle Verdadera');
+    expect(res.body[0].activo).toBe(true);
   });
 });

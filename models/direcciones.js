@@ -54,7 +54,11 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true,
       allowNull: false
     },
-
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false
+    },
   }, {
     sequelize,
     modelName: 'Direccion',

@@ -12,7 +12,7 @@ const openai = new OpenAI({
 
 const adminSchema = `
     banners(id_imagen PK, url_img, fecha_expiracion, fecha_creacion, updated_at)
-    usuarios(id_usuario PK, tipo[A=admin|U=usuario], nombres, apellidos, dni, email*, telefono, direccion, ciudad, fecha_creacion)
+    usuarios(id_usuario PK, tipo[A=admin|U=usuario], nombres, apellidos, dni, email*, telefono, direccion, ciudad, fecha_creacion, google_id)
     carritos(id_carrito PK, id_usuario FK->usuarios, estado[E=espera|V=vendido], fecha_pedido, fecha_compra, fecha_creacion)
     carritos_productos(id_carrito_producto PK, id_carrito FK->carritos, id_vino FK->vinos, cantidad, precio_venta)
     vinos(id_vino PK, nombre, descripcion, stock, estado[D=disponible|A=agotado|P=pronto], url_img_principal, id_sabor FK->sabores, id_presentacion FK->presentaciones, id_dulzor FK->dulzores, UNIQUE(id_sabor,id_presentacion,id_dulzor))

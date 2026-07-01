@@ -1,10 +1,14 @@
-const { Direccion, sequelize } = require('../models');
+const { Op } = require('sequelize');
+const { Direccion, Carrito, sequelize } = require('../models');
 
 const obtenerDirecciones = async (req, res, next) => {
   try {
     const id_usuario = req.user.id;
     const direcciones = await Direccion.findAll({
-      where: { id_usuario },
+      where: {
+        id_usuario,
+        activo: true
+      },
       order: [['id_direccion', 'DESC']]
     });
     res.json(direcciones);
@@ -17,13 +21,13 @@ const obtenerDireccionPrincipal = async (req, res, next) => {
   try {
     const id_usuario = req.user.id;
     const direccion = await Direccion.findOne({
-      where: { id_usuario, principal: true }
+      where: { id_usuario, principal: true, activo: true }
     });
-    
+
     if (!direccion) {
       return res.status(404).json({ error: 'No se encontró una dirección principal' });
     }
-    
+
     res.json(direccion);
   } catch (error) {
     next(error);
@@ -38,7 +42,7 @@ const crearDireccion = async (req, res, next) => {
 
     let esPrincipal = true;
     if (principal !== undefined) {
-       esPrincipal = principal;
+      esPrincipal = principal;
     }
 
     if (esPrincipal) {
@@ -80,7 +84,7 @@ const editarDireccion = async (req, res, next) => {
     const data = req.body;
 
     const direccionAntigua = await Direccion.findOne({
-      where: { id_direccion, id_usuario },
+      where: { id_direccion, id_usuario, activo: true },
       transaction: t
     });
 
@@ -89,33 +93,63 @@ const editarDireccion = async (req, res, next) => {
       return res.status(404).json({ error: 'Dirección no encontrada' });
     }
 
-    await direccionAntigua.update({ principal: false }, { transaction: t });
+    const usoEnPedidos = await Carrito.count({
+      where: {
+        id_direccion,
+        estado: { [Op.ne]: 'E' }
+      },
+      transaction: t
+    });
 
-    let seráPrincipal = direccionAntigua.principal;
-    if (data.principal !== undefined) {
-      seráPrincipal = data.principal;
+    if (usoEnPedidos === 0) {
+      await direccionAntigua.update(data, { transaction: t });
+
+      if (data.principal) {
+        await Direccion.update(
+          { principal: false },
+          {
+            where: { id_usuario, id_direccion: { [Op.ne]: id_direccion } },
+            transaction: t
+          }
+        );
+      }
+      await t.commit();
+      return res.json(direccionAntigua);
     }
+
+    let seráPrincipal = data.principal !== undefined ? data.principal : direccionAntigua.principal;
+
+    await direccionAntigua.update({ principal: false, activo: false }, { transaction: t });
 
     if (seráPrincipal) {
       await Direccion.update(
         { principal: false },
         { where: { id_usuario, principal: true }, transaction: t }
       );
-    } else {
-       const hayOtra = await Direccion.findOne({ where: { id_usuario, principal: true }, transaction: t });
-       if (!hayOtra) seráPrincipal = true;
     }
 
     const nuevaDireccion = await Direccion.create({
       id_usuario,
-      id_departamento: data.id_departamento !== undefined ? data.id_departamento : direccionAntigua.id_departamento,
-      id_provincia: data.id_provincia !== undefined ? data.id_provincia : direccionAntigua.id_provincia,
-      id_distrito: data.id_distrito !== undefined ? data.id_distrito : direccionAntigua.id_distrito,
-      calle: data.calle !== undefined ? data.calle : direccionAntigua.calle,
-      numero: data.numero !== undefined ? data.numero : direccionAntigua.numero,
-      cp: data.cp !== undefined ? data.cp : direccionAntigua.cp,
-      principal: seráPrincipal
+      id_departamento: data.id_departamento ?? direccionAntigua.id_departamento,
+      id_provincia: data.id_provincia ?? direccionAntigua.id_provincia,
+      id_distrito: data.id_distrito ?? direccionAntigua.id_distrito,
+      calle: data.calle ?? direccionAntigua.calle,
+      numero: data.numero ?? direccionAntigua.numero,
+      cp: data.cp ?? direccionAntigua.cp,
+      principal: seráPrincipal,
+      activo: true
     }, { transaction: t });
+
+    await Carrito.update(
+      { id_direccion: nuevaDireccion.id_direccion },
+      {
+        where: {
+          estado: 'E',
+          id_direccion: direccionAntigua.id_direccion
+        },
+        transaction: t
+      }
+    );
 
     await t.commit();
     res.json(nuevaDireccion);
@@ -135,7 +169,7 @@ const eliminarDireccion = async (req, res, next) => {
       return res.status(404).json({ error: 'Dirección no encontrada' });
     }
 
-    await direccion.update({ principal: false });
+    await direccion.update({ principal: false, activo: false });
     res.json({ message: 'Dirección eliminada correctamente (ocultada)' });
   } catch (error) {
     next(error);
